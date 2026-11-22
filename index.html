@@ -1,4 +1,16 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0E6B58">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Birthdays">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+#installBtn{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;border:0;border-radius:999px;padding:12px 18px;font:600 15px Inter,system-ui,sans-serif;background:#0E6B58;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.25)}</style>
+</head><body>
 <title>Birthday Buddy</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1151,4 +1163,17 @@ try{const tab=localStorage.getItem(LS+'.tab');if(tab&&$('#view-'+tab))showTab(ta
 window.BB={get state(){return state},importFile,buildReview,commitImport,buildRecord,parseDate,normPhone,buildPDF,buildICS,messagesFor,drawCard,cardBlob,nextOcc,renderAll,setToday(d){todayOverride=d;renderAll()},get review(){return review}};
 </script>
 
+<button id="installBtn" hidden>Install app</button>
+<script>
+/* Offline support and the Android "Install app" button. Customer data never leaves the phone. */
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; document.getElementById('installBtn').hidden = false; });
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredInstall) return; deferredInstall.prompt();
+  try { await deferredInstall.userChoice; } catch (e) {}
+  deferredInstall = null; document.getElementById('installBtn').hidden = true;
+});
+window.addEventListener('appinstalled', () => { document.getElementById('installBtn').hidden = true; });
+</script>
 </body></html>
