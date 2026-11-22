@@ -1,0 +1,1154 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Birthday Buddy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@1,600&family=Noto+Sans+SC:wght@400;600&family=Noto+Serif+SC:wght@700&display=swap">
+<style>
+/* Layout: one narrow column, sticky header with tabs; the week list is the home screen, a bottom sheet holds each customer's wish kit. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#E7EEEB; --fg:#13241F; --muted:#56665F; --line:#D3DDD9;
+  --accent:#0E6B58; --accent-ink:#FFFFFF; --accent-soft:#D9EEE7; --wa:#128C4A; --wa-ink:#FFFFFF;
+  --due:#9A5A0B; --due-soft:#FCEBCF; --bad:#B0362C; --bad-soft:#F9E0DC; --good:#2B7A4B; --good-soft:#DDF0E3;
+  --shadow:0 1px 2px rgba(19,36,31,.06),0 8px 24px rgba(19,36,31,.08);
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1513; --surface:#15201D; --surface-2:#1C2A26; --fg:#E5EEEA; --muted:#98AAA3; --line:#2A3B36;
+  --accent:#4FC4A5; --accent-ink:#05231B; --accent-soft:#16392F; --wa:#2BC46B; --wa-ink:#03200E;
+  --due:#F2BC66; --due-soft:#3A2A10; --bad:#F2897E; --bad-soft:#3E1D19; --good:#7DD39F; --good-soft:#173325;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1513; --surface:#15201D; --surface-2:#1C2A26; --fg:#E5EEEA; --muted:#98AAA3; --line:#2A3B36;
+  --accent:#4FC4A5; --accent-ink:#05231B; --accent-soft:#16392F; --wa:#2BC46B; --wa-ink:#03200E;
+  --due:#F2BC66; --due-soft:#3A2A10; --bad:#F2897E; --bad-soft:#3E1D19; --good:#7DD39F; --good-soft:#173325;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h2{font-size:1.3rem} h3{font-size:1.05rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px 6px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:1.25rem}
+.mark{width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.mark svg{width:20px;height:20px}
+.today{font-size:.82rem;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:4px 8px;scrollbar-width:none}
+nav.tabs button{border:0;background:transparent;padding:8px 12px;border-radius:999px;font-weight:600;font-size:.9rem;color:var(--muted);white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent)}
+main{padding-block:16px 64px;display:grid;gap:16px}
+section.view{display:grid;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.muted{color:var(--muted)} .small{font-size:.85rem}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.banner{border-radius:12px;padding:12px 14px;background:var(--due-soft);color:var(--fg);display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:space-between}
+.banner.info{background:var(--accent-soft)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.stat b{display:block;font-family:var(--f-display);font-size:1.6rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:.78rem;color:var(--muted)}
+.stat.due{background:var(--due-soft);border-color:transparent}
+.stat.bad b{color:var(--bad)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;width:100%}
+.row:hover{border-color:var(--accent)}
+.row.is-due{border-color:var(--due);background:linear-gradient(0deg,var(--due-soft),var(--due-soft))}
+.datechip{border-radius:10px;background:var(--surface-2);text-align:center;padding:6px 0;line-height:1.1;font-variant-numeric:tabular-nums}
+.datechip b{display:block;font-family:var(--f-display);font-size:1.25rem}
+.datechip span{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row .who{min-width:0}
+.row .who strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .who .meta{font-size:.82rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.due{background:var(--due-soft);color:var(--due)}
+.pill.today{background:var(--accent);color:var(--accent-ink)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--due-soft);color:var(--due)}
+.right{display:grid;justify-items:end;gap:4px}
+@media (max-width:560px){
+  .row{grid-template-columns:56px minmax(0,1fr);row-gap:6px}
+  .row .datechip{grid-row:span 2}
+  .row .right{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start}
+}
+.sheet>*,.panel>*{min-width:0}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:var(--wa-ink)}
+.btn.wa:hover{filter:brightness(1.08);border-color:var(--wa)}
+.wish{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.wish.is-due{border-color:var(--due);background:var(--due-soft)}
+.thumb{width:120px;height:120px;border-radius:10px;display:block;box-shadow:var(--shadow)}
+.wish-body{display:grid;gap:6px;min-width:0;align-content:start}
+.wish-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.wish-top .who{min-width:0}
+.wish-top .meta{font-size:.82rem;color:var(--muted)}
+.preview{font-size:.88rem;color:var(--muted);white-space:pre-line;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.preview:lang(zh){font-family:"Noto Sans SC",var(--f-body)}
+.wish-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.prefs{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.prefs .field{min-width:200px}
+textarea:lang(zh){font-family:"Noto Sans SC",var(--f-body)}
+@media (max-width:560px){.wish{grid-template-columns:84px minmax(0,1fr)}.thumb{width:84px;height:84px}.wish-actions .btn.wa{flex:1 1 100%}}
+.issues .pill{white-space:normal;text-align:left}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:10px;font-weight:600;font-size:.9rem;text-decoration:none;color:var(--fg);min-height:40px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--accent);padding-inline:6px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+label.field{display:grid;gap:4px;font-size:.85rem;font-weight:600;min-width:0}
+input[type=text],input[type=email],input[type=tel],input[type=search],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px;font-weight:400;font-size:.95rem;min-width:0}
+textarea{resize:vertical;min-height:150px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px 16px;text-align:center;display:grid;gap:8px;justify-items:center;background:var(--surface)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--surface-2);font-weight:600}
+tr:last-child td{border-bottom:0}
+.issues{display:flex;flex-wrap:wrap;gap:6px}
+.rcard{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px;background:var(--surface)}
+.rcard.err{border-color:var(--bad)}
+.rcard.skip{opacity:.6}
+.rcard-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.check{display:inline-flex;gap:8px;align-items:center;font-weight:600;font-size:.9rem}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(8,18,15,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:94%;overflow-y:auto;border-radius:18px 18px 0 0;padding-block:16px calc(24px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px;box-shadow:var(--shadow)}
+@media (min-width:760px){.overlay{align-items:center}.sheet{border-radius:18px;max-height:90%}}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.x{border:0;background:var(--surface-2);width:36px;height:36px;border-radius:50%;font-size:1.2rem;line-height:1;flex:none}
+.cardbox{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:620px){.cardbox{grid-template-columns:minmax(0,1fr)}}
+canvas.card{width:100%;max-width:300px;aspect-ratio:1/1;border-radius:12px;box-shadow:var(--shadow);display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.84rem;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.msghead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.contact{font-variant-numeric:tabular-nums;user-select:all;font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.9rem;z-index:80;max-width:calc(100% - 32px);text-align:center}
+.confirm{background:var(--surface);border-radius:16px;padding:20px;max-width:440px;width:calc(100% - 32px);display:grid;gap:14px;margin:auto;box-shadow:var(--shadow)}
+.overlay.center{align-items:center}
+details summary{cursor:pointer;font-weight:600}
+.guide ol{margin:0;padding-left:20px;display:grid;gap:8px}
+.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.spinner{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--accent-ink)"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 5 0M12 12V8M12 5.5c.8-.8.8-1.7 0-2.5-.8.8-.8 1.7 0 2.5z"/></svg></div>
+        <h1>Birthday Buddy</h1>
+      </div>
+      <div class="today" id="todayLabel"></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="week" aria-selected="true">This week</button>
+      <button role="tab" data-tab="customers" aria-selected="false">Customers</button>
+      <button role="tab" data-tab="import" aria-selected="false">Import list</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+      <button role="tab" data-tab="guide" aria-selected="false">How to use</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- WEEK -->
+  <section class="view" id="view-week">
+    <div id="exampleBanner"></div>
+    <div class="stats" id="stats"></div>
+    <div class="panel">
+      <div class="panel-head">
+        <div><div class="eyebrow">Next 7 days</div><h2 id="weekTitle">Birthdays this week</h2></div>
+        <span class="small muted">Each card has the wish, the image and a WhatsApp button</span>
+      </div>
+      <div class="prefs">
+        <div style="display:grid;gap:4px"><span class="eyebrow">Wish language · 默认语言</span><div class="chips" id="weekLang"></div></div>
+        <label class="field">Wish style · 祝福风格<select id="weekStyle"></select></label>
+        <label class="field">Address as · 称呼方式<select id="weekAddr"></select></label>
+      </div>
+      <div class="list" id="weekList"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Download</div><h2>Birthday list as PDF</h2></div></div>
+      <p class="small muted">One page per customer with the card image, the wish in your chosen language (plus English or Malay), and a WhatsApp button that opens the chat with the wish filled in.</p>
+      <div class="grid2">
+        <label class="field">Who to include
+          <select id="pdfRange">
+            <option value="7">Birthdays in the next 7 days</option>
+            <option value="30">Birthdays in the next 30 days</option>
+            <option value="ticked">Customers I ticked on the Customers tab</option>
+            <option value="all">Everyone with a birthday on file</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:flex-end"><button class="btn primary" id="pdfBtn" style="width:100%">Download PDF</button></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Coming up</div><h2>Next 30 days</h2></div></div>
+      <div class="list" id="monthList"></div>
+    </div>
+    <div class="panel" id="fixPanel">
+      <div class="panel-head"><div><div class="eyebrow">Needs fixing</div><h2>These customers can't be reminded yet</h2></div></div>
+      <p class="small muted">Their birthday is missing or isn't a real date, so they're left out of reminders until you fix it. Nothing was guessed.</p>
+      <div class="list" id="fixList"></div>
+    </div>
+  </section>
+
+  <!-- CUSTOMERS -->
+  <section class="view" id="view-customers" hidden>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Your list</div><h2 id="custCount">Customers</h2></div>
+        <div class="btns"><button class="btn" id="addBtn">Add customer</button></div></div>
+      <label class="field">Search<input type="search" id="search" placeholder="Name, company, account manager"></label>
+      <div class="btns small"><button class="btn ghost" id="tickAll">Tick all shown</button><button class="btn ghost" id="tickNone">Untick all</button><span class="muted" id="tickInfo" style="align-self:center"></span></div>
+      <div class="list" id="custList"></div>
+    </div>
+  </section>
+
+  <!-- IMPORT -->
+  <section class="view" id="view-import" hidden>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Step 1</div><h2>Choose your customer list</h2></div></div>
+      <label class="drop" id="drop">
+        <strong>Drop a file here or tap to choose</strong>
+        <span class="small muted">Excel (.xlsx, .xls), CSV, PDF or a photo/screenshot (.png, .jpg)</span>
+        <input type="file" id="fileIn" accept=".xlsx,.xls,.csv,.pdf,.png,.jpg,.jpeg,.json" hidden>
+        <span class="btn primary">Choose file</span>
+      </label>
+      <p class="small muted">Your file is read inside this browser. It isn't uploaded anywhere, and the list is kept only on this device.</p>
+      <div id="importStatus"></div>
+      <details>
+        <summary>What the file should look like</summary>
+        <div style="display:grid;gap:10px;margin-top:10px">
+          <p class="small">One row per customer, with a heading row. Column names can vary a little (for example "DOB" or "Mobile" work too).</p>
+          <div class="tablewrap"><table>
+            <tr><th>Customer Name</th><th>Title</th><th>Preferred Name</th><th>Company</th><th>Birthday</th><th>Phone</th><th>Email</th><th>Account Manager</th></tr>
+            <tr><td>Tan Mei Ling</td><td>Madam</td><td>Mei Ling</td><td>Sinar Logistics Sdn Bhd</td><td>21/11/1980</td><td>012-345 6789</td><td>meiling@example.com</td><td>Aisyah Rahman</td></tr>
+          </table></div>
+          <p class="small muted">Title and Preferred Name (称呼) are optional. Birthdays are read as day/month (Malaysian style) unless you change it in Settings. The year is optional.</p>
+          <div><button class="btn" id="templateBtn">Download empty template (.csv)</button></div>
+        </div>
+      </details>
+    </div>
+    <div class="panel" id="reviewPanel" hidden>
+      <div class="panel-head"><div><div class="eyebrow">Step 2</div><h2>Check before saving</h2></div></div>
+      <div id="reviewSummary"></div>
+      <div class="list" id="reviewList"></div>
+      <div class="grid2">
+        <label class="field">What to do with your current list
+          <select id="importMode">
+            <option value="replace">Replace it with this file</option>
+            <option value="add">Add these to it</option>
+          </select>
+        </label>
+        <div style="display:flex;align-items:flex-end;gap:8px">
+          <button class="btn" id="cancelImport">Cancel</button>
+          <button class="btn primary" id="saveImport" style="flex:1">Save customers</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings" hidden>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Sign-off</div><h2>Who the wishes come from</h2></div></div>
+      <div class="grid2">
+        <label class="field">Your company (shown under the name)<input type="text" id="setOrg" placeholder="e.g. ABC Bank Berhad"></label>
+        <label class="field">Your name (used when a customer has no account manager)<input type="text" id="setMe" placeholder="e.g. Ng Wai Yee"></label>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Wishes · 祝福</div><h2>Default language and style</h2></div></div>
+      <div class="grid2">
+        <label class="field">Default language · 默认语言<select id="setMsgLang"><option value="en">English</option><option value="zh">华语 中文 (Chinese)</option><option value="bm">Bahasa Melayu</option></select></label>
+        <label class="field">Default wish style · 祝福风格<select id="setStyle"></select></label>
+        <label class="field">Address customers by · 称呼方式<select id="setAddr"></select></label>
+      </div>
+      <p class="small muted">These apply to every customer. You can still pick a different language, style or 称呼 for one customer on their card. Customers with no 称呼 saved are addressed by title and full name.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Card</div><h2>Birthday card image</h2></div></div>
+      <div class="grid2">
+        <label class="field">Default design<select id="setTheme"></select></label>
+        <label class="field">Card language<select id="setCardLang"><option value="auto">Match the wish language</option><option value="en_bm">English + Malay</option><option value="en_zh">English + 华语</option><option value="zh_en">华语 + English</option><option value="bm_en">Malay + English</option><option value="en">English only</option><option value="zh">华语 only</option><option value="bm">Malay only</option></select></label>
+      </div>
+      <div class="btns" style="align-items:center">
+        <label class="btn">Add your logo (PNG/JPG)<input type="file" id="logoIn" accept=".png,.jpg,.jpeg" hidden></label>
+        <button class="btn ghost" id="logoClear" hidden>Remove logo</button>
+        <span class="small muted" id="logoInfo">No logo added</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Dates</div><h2>How birthdays are written in your file</h2></div></div>
+      <label class="field">Date order<select id="setOrder"><option value="DMY">Day / Month / Year (03/07/1985 = 3 July)</option><option value="MDY">Month / Day / Year (03/07/1985 = 7 March)</option></select></label>
+      <p class="small muted">If a date can only be read one way (for example 25/12), it is read that way and flagged for you to check.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Reminders</div><h2>Get reminded 3 days before, every year</h2></div></div>
+      <div id="icsArea"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Your data</div><h2>Backup and reset</h2></div></div>
+      <div class="btns">
+        <button class="btn" id="backupBtn">Download backup (.json)</button>
+        <button class="btn" id="exampleBtn">Load example customers</button>
+        <button class="btn danger" id="wipeBtn">Delete all customers</button>
+      </div>
+      <p class="small muted">To restore a backup, import the .json file on the Import list tab.</p>
+    </div>
+  </section>
+
+  <!-- GUIDE -->
+  <section class="view guide" id="view-guide" hidden>
+    <div class="panel">
+      <div class="panel-head"><div><div class="eyebrow">Plain-English guide</div><h2>How to use Birthday Buddy</h2></div></div>
+      <ol>
+        <li><b>Set up once.</b> In Settings, type your company name and your own name. Add your logo if you like.</li>
+        <li><b>Import your list.</b> On Import list, choose your Excel, CSV, PDF or screenshot. Check the rows marked in orange or red, fix anything wrong, then tap Save customers.</li>
+        <li><b>Turn on reminders.</b> In Settings, add the reminders to your phone calendar. Your phone will alert you 3 days before each birthday, every year.</li>
+        <li><b>Every Monday</b> (or when your phone reminds you), open This week. Orange rows are birthdays 3 days away. Prepare those now.</li>
+        <li><b>Choose your defaults.</b> At the top of This week (or in Settings), pick the wish language (English, 华语 or Malay) and the wish style (Classic, Warm, Short, Blessings, or a mix). You can override both for any one customer.</li>
+        <li><b>Send it yourself.</b> Each birthday card shows the wish and the image. Tap the green WhatsApp button: the chat opens with the wish filled in and the card image is copied, so paste it in and press Send. The app never sends anything on its own.</li>
+        <li><b>Want to change something?</b> Tap Edit / more to pick a card design, edit the wording, save the image or email the customer.</li>
+        <li><b>Tick it off.</b> Tap Mark as wished so the team knows it's done.</li>
+        <li><b>Need a printout or want to share with the team?</b> On This week, tap Download PDF.</li>
+      </ol>
+      <p class="small muted">Rows with a missing or impossible birthday go to "Needs fixing" instead of being guessed. Phone numbers missing the leading 0 are corrected and flagged so you can check them.</p>
+    </div>
+  </section>
+</main>
+
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_LOOKUP={jan:1,january:1,januari:1,feb:2,february:2,februari:2,mar:3,march:3,mac:3,apr:4,april:4,may:5,mei:5,jun:6,june:6,jul:7,july:7,julai:7,aug:8,august:8,ogos:8,sep:9,sept:9,september:9,oct:10,october:10,okt:10,oktober:10,nov:11,november:11,dec:12,december:12,dis:12,disember:12};
+function hash(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let toastTimer;
+function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,2600)}
+
+/* ---------- state ---------- */
+const LS='birthdayBuddy.v1';
+const DEFAULT_SETTINGS={orgName:'',myName:'',dateOrder:'DMY',theme:'jade',cardLang:'auto',lang:'en',style:'auto',addressBy:'full',logo:''};
+let state={customers:[],settings:{...DEFAULT_SETTINGS},isExample:false};
+let ticked=new Set();
+function loadState(){try{const raw=localStorage.getItem(LS);if(raw){const s=JSON.parse(raw);state={customers:s.customers||[],settings:{...DEFAULT_SETTINGS,...(s.settings||{})},isExample:!!s.isExample};if(state.settings.cardLang==='both')state.settings.cardLang='en_bm';return true}}catch(e){}return false}
+function saveState(){try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){toast("Couldn't save on this device. Download a backup from Settings.")}}
+
+/* ---------- dates ---------- */
+let todayOverride=null;
+function today(){const d=todayOverride?new Date(todayOverride+'T12:00:00'):new Date();return{y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate()}}
+const dayNum=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);
+const isLeap=y=>(y%4===0&&y%100!==0)||y%400===0;
+const dowOf=(y,m,d)=>new Date(Date.UTC(y,m-1,d)).getUTCDay();
+function nextOcc(c){
+  if(!c.bm||!c.bd)return null;const t=today();
+  const occ=yy=>({y:yy,m:c.bm,d:(c.bm===2&&c.bd===29&&!isLeap(yy))?28:c.bd});
+  let o=occ(t.y);if(dayNum(o.y,o.m,o.d)<dayNum(t.y,t.m,t.d))o=occ(t.y+1);
+  o.days=dayNum(o.y,o.m,o.d)-dayNum(t.y,t.m,t.d);o.dow=DOW[dowOf(o.y,o.m,o.d)];o.shifted=c.bm===2&&c.bd===29&&o.d===28;return o}
+function fixYear(y){y=+y;if(String(y).length<=2){const cy=new Date().getFullYear()%100;y=y>cy?1900+y:2000+y}return y}
+function okDate(y,m,d,note){
+  if(!(m>=1&&m<=12))return{err:'invalid'};
+  const max=[31,(y&&!isLeap(y))?28:29,31,30,31,30,31,31,30,31,30,31][m-1];
+  if(!(d>=1&&d<=max))return{err:'invalid'};
+  if(y&&(y<1900||y>new Date().getFullYear())){y=null;note=(note?note+'. ':'')+'The year looked wrong, so it was ignored'}
+  return{y:y||null,m,d,note:note||null}}
+function parseDate(v,order){
+  if(v==null||v==='')return{err:'missing'};
+  if(v instanceof Date&&!isNaN(v))return okDate(v.getFullYear(),v.getMonth()+1,v.getDate());
+  if(typeof v==='number'){if(v>1000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return okDate(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate())}return{err:'unreadable'}}
+  let s=String(v).trim().replace(/\s+/g,' ').replace(/[ T]\d{1,2}:\d{2}(:\d{2})?.*$/,'');
+  if(!s||/^(-|n\/?a|nil|none|tiada)$/i.test(s))return{err:'missing'};
+  let m;
+  if((m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/)))return okDate(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})[-\/. ](\d{1,2})(?:[-\/. ](\d{2,4}))?$/))){
+    const a=+m[1],b=+m[2],y=m[3]?fixYear(m[3]):null;let d,mo,note=null;
+    if(a>12&&b<=12){d=a;mo=b}
+    else if(b>12&&a<=12){d=b;mo=a;note=`Read as month/day because ${b} can't be a month. Please check`}
+    else if(order==='MDY'){mo=a;d=b}else{d=a;mo=b}
+    return okDate(y,mo,d,note)}
+  if((m=s.match(/^(\d{1,2})(?:st|nd|rd|th)?[ \-\/.]*([A-Za-z]+)\.?,?(?:[ \-\/.]*(\d{2,4}))?$/))){const mo=MONTH_LOOKUP[m[2].toLowerCase()];if(mo)return okDate(m[3]?fixYear(m[3]):null,mo,+m[1])}
+  if((m=s.match(/^([A-Za-z]+)\.?[ \-]?(\d{1,2})(?:st|nd|rd|th)?,?(?:[ ,\-]+(\d{2,4}))?$/))){const mo=MONTH_LOOKUP[m[1].toLowerCase()];if(mo)return okDate(m[3]?fixYear(m[3]):null,mo,+m[2])}
+  if(/^\d{5}(\.\d+)?$/.test(s))return parseDate(+s,order);
+  return{err:'unreadable'}}
+const fmtBday=c=>c.bm?`${c.bd} ${MON[c.bm-1]}${c.by?' '+c.by:''}`:'';
+
+/* ---------- people fields ---------- */
+const LOWER=new Set(['bin','binti','bt','bte','a/l','a/p','van','de','@']);
+function niceName(s){
+  s=String(s??'').trim().replace(/\s+/g,' ');if(!s)return'';
+  if(!(s===s.toUpperCase()||s===s.toLowerCase()))return s;
+  return s.toLowerCase().split(' ').map((w,i)=>i>0&&LOWER.has(w)?w:w.split(/([-'’.])/).map(p=>p.charAt(0).toUpperCase()+p.slice(1)).join('')).join(' ')}
+function normPhone(raw){
+  const s=String(raw??'').trim();if(!s)return{phone:''};
+  const plus=s.startsWith('+');const d=s.replace(/\D/g,'');
+  const bad={phone:'',issue:{level:'warn',text:`Phone number looks wrong: ${s}`}};
+  if(!d)return bad;
+  if(plus)return d.length>=8&&d.length<=15?{phone:d}:bad;
+  if(d.startsWith('60')&&d.length>=11&&d.length<=12)return{phone:d};
+  if(d.startsWith('0')&&d.length>=9&&d.length<=11)return{phone:'6'+d};
+  if(d.startsWith('1')&&d.length>=9&&d.length<=10)return{phone:'60'+d,issue:{level:'warn',text:`Phone "${s}" was missing the leading 0. Added it, please check`}};
+  return bad}
+function fmtPhone(p){if(!p)return'';if(p.startsWith('60')){const r=p.slice(2);return`+60 ${r.slice(0,2)}-${r.slice(2,5)} ${r.slice(5)}`}return'+'+p}
+function buildRecord(raw,order){
+  const issues=[];const name=niceName(raw.name);
+  if(!name)issues.push({level:'err',text:'Name is missing'});
+  const pd=parseDate(raw.birthday,order);let bm=null,bd=null,by=null;
+  if(pd.err)issues.push({level:'err',text:pd.err==='missing'?'Birthday is missing':pd.err==='invalid'?`Birthday "${raw.birthday}" is not a real date`:`Birthday "${raw.birthday}" couldn't be read`});
+  else{bm=pd.m;bd=pd.d;by=pd.y;if(pd.note)issues.push({level:'warn',text:pd.note});if(bm===2&&bd===29)issues.push({level:'info',text:'Born on 29 Feb. Reminded on 28 Feb in non-leap years'})}
+  const ph=normPhone(raw.phone);if(ph.issue)issues.push(ph.issue);
+  let email=String(raw.email??'').trim();
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){issues.push({level:'warn',text:`Email looks wrong: ${email}`});email=''}
+  if(email&&raw.emailFixed)issues.push({level:'warn',text:`Email had a space where a dot should be, read as ${email}. Please check`});
+  if(!ph.phone&&!email)issues.push({level:'warn',text:"No working phone or email, so you'll need to find a way to reach them"});
+  const am=niceName(raw.am);
+  if(!am)issues.push({level:'warn',text:'No account manager. Your name from Settings will be used'});
+  const company=String(raw.company??'').trim();
+  if(raw.source==='pdf'||raw.source==='image')issues.push({level:'warn',text:`Read from a ${raw.source==='pdf'?'PDF':'picture'}. Please check every field`});
+  return{id:raw.id||uid(),name,title:niceName(raw.title),company,birthdayRaw:String(raw.birthday??''),bm,bd,by,phone:ph.phone,phoneRaw:String(raw.phone??''),email,emailRaw:String(raw.email??''),am,nick:String(raw.nick??'').trim(),addr:raw.addr||null,lang:raw.lang||null,issues,wished:raw.wished||{},style:raw.style||null,theme:raw.theme||null,custom:raw.custom||null,source:raw.source||'file'}}
+const hasErr=c=>c.issues.some(i=>i.level==='err');
+function recordToRaw(c){return{id:c.id,name:c.name,title:c.title,company:c.company,birthday:c.bm?fmtBday(c):c.birthdayRaw,phone:c.phone?fmtPhone(c.phone):c.phoneRaw,email:c.email||c.emailRaw,am:c.am,nick:c.nick||'',addr:c.addr||null,lang:c.lang||null,wished:c.wished,style:c.style,theme:c.theme,custom:c.custom,source:'manual'}}
+
+/* ---------- spreadsheet header matching ---------- */
+const SYN={
+  am:['account manager','acct manager','account mgr','relationship manager','rm','servicing agent','agent','agent name','manager','officer','owner','am','salesperson','sales person','pegawai'],
+  company:['company','company name','organisation','organization','employer','business','business name','syarikat','firm'],
+  birthday:['birthday','birth date','date of birth','dob','d.o.b','d.o.b.','bday','birthdate','tarikh lahir','hari lahir'],
+  email:['email','e-mail','email address','emel','mail'],
+  phone:['phone','mobile','mobile no','mobile no.','mobile number','phone number','phone no','hp','h/p','handphone','contact','contact no','contact number','whatsapp','tel','telephone','no tel','no. tel'],
+  nick:['preferred name','nickname','nick name','salutation name','call name','address as','称呼','昵称','nama panggilan','panggilan','preferred'],
+  title:['title','salutation','gelaran'],
+  name:['customer name','client name','name','full name','customer','client','nama','insured name','policyholder']};
+function matchHeader(cell){
+  const c=String(cell??'').toLowerCase().replace(/[_*:]/g,' ').replace(/\s+/g,' ').trim();if(!c||c.length>40)return null;
+  for(const k in SYN)if(SYN[k].includes(c))return k;
+  for(const k in SYN)if(SYN[k].some(w=>w.length>3&&c.includes(w)))return k;
+  return null}
+function findHeader(rows){
+  let best=null;
+  for(let i=0;i<Math.min(rows.length,20);i++){
+    const map={};let hits=0;
+    rows[i].forEach((cell,j)=>{const k=matchHeader(cell);if(k&&map[k]==null){map[k]=j;hits++}});
+    if(hits>=2&&(map.name!=null||map.birthday!=null)&&(!best||hits>best.hits))best={row:i,map,hits}}
+  return best}
+function rowsToRaw(rows,source){
+  const h=findHeader(rows);if(!h)return null;
+  const out=[];
+  for(let i=h.row+1;i<rows.length;i++){
+    const r=rows[i];if(!r||r.every(v=>String(v??'').trim()===''))continue;
+    const raw={source,line:i+1};for(const k in h.map)raw[k]=r[h.map[k]];
+    out.push(raw)}
+  return{raws:out,map:h.map}}
+
+/* ---------- library loader ---------- */
+const LIBS={
+  xlsx:['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
+  pdfjs:['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'],
+  jspdf:['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'],
+  ocr:['https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js']};
+const loaded={};
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Could not load '+src));document.head.appendChild(s)})}
+async function loadLib(name){if(!loaded[name])loaded[name]=(async()=>{for(const src of LIBS[name])await loadScript(src)})();try{return await loaded[name]}catch(e){delete loaded[name];throw e}}
+
+/* ---------- importing ---------- */
+let review=null;// {rows:[{rec,include,raw}], source}
+async function importFile(file){
+  const status=$('#importStatus');
+  status.innerHTML=`<p class="small"><span class="spinner"></span> Reading ${esc(file.name)}…</p>`;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  try{
+    let raws=[],source='file',note='';
+    if(ext==='json'){
+      const data=JSON.parse(await file.text());const list=data.customers||data;
+      if(!Array.isArray(list))throw new Error('This .json file is not a Birthday Buddy backup.');
+      raws=list.map(c=>recordToRaw({...buildRecord({},'DMY'),...c,issues:[]}));source='backup';
+      if(data.settings)note='backup';
+      review={source,raws,settings:data.settings||null};
+    }else if(['xlsx','xls','csv'].includes(ext)){
+      await loadLib('xlsx');
+      const wb=ext==='csv'?XLSX.read(await file.text(),{type:'string',raw:true}):XLSX.read(await file.arrayBuffer(),{type:'array'});
+      let got=null;
+      for(const sn of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});got=rowsToRaw(rows,'file');if(got&&got.raws.length)break}
+      if(!got)throw new Error("I couldn't find column headings such as Name and Birthday. Add a heading row (see the example below) and try again.");
+      raws=got.raws;
+      const missingCols=['name','birthday','phone','email','am','company'].filter(k=>got.map[k]==null);
+      if(missingCols.length)note='cols:'+missingCols.join(',');
+      review={source:'file',raws};
+    }else if(ext==='pdf'){
+      const rows=await pdfToRows(file);raws=cellRowsToRaw(rows,'pdf');source='pdf';review={source,raws};
+    }else if(['png','jpg','jpeg'].includes(ext)){
+      const rows=await imageToRows(file);raws=cellRowsToRaw(rows,'image');source='image';review={source,raws};
+    }else throw new Error('That file type isn\'t supported. Use Excel, CSV, PDF, PNG or JPG.');
+    if(!review.raws.length)throw new Error("I couldn't find any customers in that file.");
+    review.note=note;review.fileName=file.name;
+    buildReview();status.innerHTML='';
+    $('#reviewPanel').hidden=false;$('#reviewPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    return review;
+  }catch(e){status.innerHTML=`<div class="banner"><span>${esc(e.message||String(e))}</span></div>`;throw e}}
+
+/* PDF → rows of positioned cells */
+async function pdfToRows(file){
+  await loadLib('pdfjs');
+  const lib=window.pdfjsLib;lib.GlobalWorkerOptions.workerSrc=LIBS.pdfjs[1];
+  const pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
+  const rows=[];rows.tol=30;
+  for(let p=1;p<=Math.min(pdf.numPages,30);p++){
+    const page=await pdf.getPage(p);const tc=await page.getTextContent();
+    const items=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({x:i.transform[4],y:i.transform[5]-p*2000,w:i.width,t:i.str}));
+    rows.push(...groupRows(items,3,4));}
+  if(rows.length)return rows;
+  // No text inside: the PDF is a scan or a printout saved as pictures. Read each page with OCR.
+  const out=[];out.tol=0;
+  for(let p=1;p<=Math.min(pdf.numPages,10);p++){
+    $('#importStatus').innerHTML=`<p class="small"><span class="spinner"></span> This PDF is a scanned picture. Reading page ${p} of ${Math.min(pdf.numPages,10)}… (up to a minute per page)</p>`;
+    const page=await pdf.getPage(p);const vp=page.getViewport({scale:2.5});
+    const cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const r=await ocrToRows(cv,p);out.push(...r);out.tol=Math.max(out.tol,r.tol)}
+  if(!out.length)throw new Error("I couldn't read any text in this PDF. Try the Excel or CSV version of your list.");
+  return out}
+function groupRows(items,yTol,gap){
+  items.sort((a,b)=>b.y-a.y||a.x-b.x);const rows=[];
+  for(const it of items){let r=rows.find(r=>Math.abs(r.y-it.y)<=yTol);if(!r){r={y:it.y,items:[]};rows.push(r)}r.items.push(it)}
+  rows.sort((a,b)=>b.y-a.y);
+  return rows.map(r=>{r.items.sort((a,b)=>a.x-b.x);const cells=[];
+    for(const it of r.items){const last=cells[cells.length-1];
+      if(last&&it.x-(last.x+last.w)<gap){last.t+=(it.x-(last.x+last.w)>1?' ':'')+it.t;last.w=it.x+it.w-last.x}
+      else cells.push({x:it.x,w:it.w,t:it.t})}
+    return{y:r.y,cells:cells.map(c=>({x:c.x,w:c.w,text:c.t.trim()})).filter(c=>c.text)}})}
+
+/* picture → rows (OCR) */
+async function imageToRows(file){
+  $('#importStatus').innerHTML='<p class="small"><span class="spinner"></span> Reading text from the picture. This can take up to a minute…</p>';
+  const rows=await ocrToRows(file,1);
+  if(!rows.length)throw new Error("I couldn't read any text in that picture. Try a sharper screenshot or the Excel file.");
+  return rows}
+let ocrWorker=null;
+const ocrClean=t=>String(t||'').replace(/[\[\]|~{}“”"©_]/g,'').replace(/^[(\s.,:;]+|[\s,;:]+$/g,'').trim();
+/* Erase table border lines so they aren't read as letters (a border before "NG" reads as "ING"). */
+function removeLines(cv){
+  const W=cv.width,H=cv.height,ctx=cv.getContext('2d');const im=ctx.getImageData(0,0,W,H),d=im.data;
+  const dark=new Uint8Array(W*H);for(let i=0;i<W*H;i++){const o=i*4;dark[i]=(d[o]*.3+d[o+1]*.59+d[o+2]*.11)<170?1:0}
+  const kill=new Uint8Array(W*H);const vMin=Math.round(H/40),hMin=Math.round(W/25);
+  for(let x=0;x<W;x++){let run=0;for(let y=0;y<=H;y++){if(y<H&&dark[y*W+x])run++;else{if(run>=vMin)for(let k=y-run;k<y;k++)kill[k*W+x]=1;run=0}}}
+  for(let y=0;y<H;y++){let run=0;for(let x=0;x<=W;x++){if(x<W&&dark[y*W+x])run++;else{if(run>=hMin)for(let k=x-run;k<x;k++)kill[y*W+k]=1;run=0}}}
+  for(let i=0;i<W*H;i++)if(kill[i]){const o=i*4;d[o]=d[o+1]=d[o+2]=255}
+  ctx.putImageData(im,0,0);return cv}
+async function fileToCanvas(file){const url=URL.createObjectURL(file);try{const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+  const sc=Math.min(3,Math.max(1,2000/im.width));const cv=document.createElement('canvas');cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+  const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.drawImage(im,0,0,cv.width,cv.height);return cv}finally{URL.revokeObjectURL(url)}}
+async function ocrToRows(img,pageNo){
+  if(img instanceof Blob)img=await fileToCanvas(img);
+  removeLines(img);
+  try{await loadLib('ocr');if(!ocrWorker)ocrWorker=await Tesseract.createWorker('eng')}
+  catch(e){throw new Error("Reading scanned pages and pictures isn't available here. Use the Excel or CSV version of your list, or open the offline copy of Birthday Buddy on a laptop.")}
+  const {data}=await ocrWorker.recognize(img);
+  const words=(data.words||[]).map(w=>({...w,text:ocrClean(w.text)})).filter(w=>w.text&&w.confidence>5);
+  if(!words.length){const r=[];r.tol=30;return r}
+  const hs=words.map(w=>w.bbox.y1-w.bbox.y0).sort((a,b)=>a-b);const h=hs[Math.floor(hs.length/2)]||20;
+  const items=words.map(w=>({x:w.bbox.x0,y:-(w.bbox.y0+w.bbox.y1)/2-pageNo*100000,w:w.bbox.x1-w.bbox.x0,t:w.text}));
+  const rows=groupRows(items,h*0.6,h*0.9);rows.tol=h*3;return rows}
+
+/* rows of cells → raw records: a table with headings, or a single-customer form */
+function cellRowsToRaw(rows,source){
+  const table=tableFromCells(rows,source);
+  if(table&&table.filter(r=>!parseDate(r.birthday,state.settings.dateOrder).err).length>=3)return table;
+  const one=formFromCells(rows,source);
+  if(one)return[one];
+  if(table&&table.length)return table;
+  throw new Error("I couldn't find customer details in this file. Try the Excel or CSV version.")}
+function tableFromCells(rows,source){
+  for(let i=0;i<Math.min(rows.length,40);i++){
+    const cols=[];rows[i].cells.forEach(c=>{const k=matchHeader(c.text);if(k&&!cols.some(x=>x.k===k))cols.push({k,x:c.x})});
+    if(cols.length>=3&&cols.some(c=>c.k==='name')&&cols.some(c=>c.k==='birthday')){
+      cols.sort((a,b)=>a.x-b.x);const out=[];
+      for(let r=i+1;r<rows.length;r++){
+        const raw={source};
+        rows[r].cells.forEach(c=>{let col=null;for(const h of cols)if(h.x<=c.x+(rows.tol||30)/5)col=h;if(col)raw[col.k]=raw[col.k]?raw[col.k]+' '+c.text:c.text});
+        const okBday=!parseDate(raw.birthday,state.settings.dateOrder).err;
+        if(raw.name&&(okBday||raw.email||raw.phone))out.push(raw)}
+      return out}}
+  return null}
+function formFromCells(rows,source){
+  const isLabelish=v=>!!matchHeader(v)||/^(gender|id|id no|id type|religion|age|status|type)$/i.test(v);
+  function labelValue(re,test,from=0,to=rows.length){
+    for(let i=from;i<Math.min(to,rows.length);i++){const cells=rows[i].cells;
+      for(let j=0;j<cells.length;j++){const t=cells[j].text.trim();const m=t.match(re);if(!m)continue;
+        const rest=t.slice(m[0].length).replace(/^[\s:\-]+/,'').trim();
+        const cands=[rest,cells[j+1]&&cells[j+1].text.trim()].filter(Boolean);
+        for(const c of cands)if(!isLabelish(c)&&(!test||test(c)))return{value:c,row:i}}}
+    return null}
+  const nameTest=v=>/^[A-Za-z@'’.\-\/ ]{3,60}$/.test(v)&&/[A-Za-z]{2}/.test(v);
+  const name=labelValue(/^(customer name|client name|insured name|name of customer|nama|name)\b/i,nameTest);
+  // birthday: label + value, or a heading with the date under it
+  const dTest=v=>!parseDate(v,state.settings.dateOrder).err;
+  let bday=labelValue(/^(date of birth|d\.?o\.?b\.?|birth ?date|birthday|tarikh lahir)/i,dTest);
+  if(!bday){outer:for(let i=0;i<rows.length;i++)for(const c of rows[i].cells)if(/^(date of birth|d\.?o\.?b\.?|birth ?date|birthday)$/i.test(c.text)){
+    for(let k=i+1;k<Math.min(i+4,rows.length);k++)for(const d of rows[k].cells)if(Math.abs(d.x-c.x)<(rows.tol||30)&&dTest(d.text)){bday={value:d.text,row:k};break outer}}}
+  let em=null,emailFixed=false;
+  for(const r of rows){for(const c of r.cells){const m=c.text.match(/([A-Za-z0-9._%+\-]+(?: [A-Za-z0-9._%+\-]+)?)\s?@\s?([A-Za-z0-9\-]+(?:[ .][A-Za-z0-9\-]+)*\.[A-Za-z]{2,})/);
+    if(m){const local=m[1],dom=m[2];emailFixed=/\s/.test(local+dom);em=[local.replace(/\s+/g,'.')+'@'+dom.replace(/\s+/g,'.')];break}}if(em)break}
+  const pTest=v=>v.replace(/\D/g,'').length>=8;
+  const phone=labelValue(/^(mobile( no\.?| number| phone)?|hand ?phone|h\/p|hp)\b/i,pTest)||labelValue(/^(phone( no\.?| number)?|tel(ephone)?( no\.?)?|office tel|residence tel|contact( no\.?| number)?)\b/i,pTest);
+  const title=labelValue(/^(title|salutation)\b/i,v=>/^[A-Za-z'.\s]{2,14}$/.test(v));
+  const company=labelValue(/^(company( name)?|employer|organi[sz]ation|business name|syarikat)\b/i,v=>v.length>1);
+  let am=null;
+  for(let i=0;i<rows.length&&!am;i++)for(const c of rows[i].cells){
+    if(/(servicing agent|account manager|relationship manager|\bRM\b)/i.test(c.text)){
+      am=labelValue(/^(servicing agent|account manager|relationship manager|rm)\b/i,nameTest,i,i+1)||labelValue(/^name\b/i,nameTest,i,i+7);if(am)break}}
+  if(!name&&!bday)return null;
+  return{source,emailFixed,name:name?.value||'',birthday:bday?.value||'',email:em?em[0]:'',phone:phone?.value||'',title:title?.value||'',company:company?.value||'',am:am?.value||''}}
+
+/* ---------- review UI ---------- */
+function buildReview(){
+  const order=state.settings.dateOrder;
+  review.rows=review.raws.map(raw=>({raw:{...raw},rec:buildRecord(raw,order),include:true}));
+  markDuplicates();renderReview()}
+function markDuplicates(){
+  const seen=new Map();const mode=$('#importMode').value;
+  if(mode==='add')state.customers.forEach(c=>seen.set(dupKey(c),'your current list'));
+  review.rows.forEach((r,i)=>{r.rec.issues=r.rec.issues.filter(x=>!x.dup);const k=dupKey(r.rec);if(!r.rec.name)return;
+    if(seen.has(k)){r.rec.issues.push({level:'warn',dup:true,text:`Looks like a duplicate of ${seen.get(k)}. Skipped unless you tick it`});if(r.include===true&&!r.touched)r.include=false}
+    else{seen.set(k,'row '+(i+1));if(!r.touched)r.include=true}})}
+const dupKey=c=>c.name.toLowerCase().replace(/[^a-z]/g,'')+'|'+(c.bm||'')+'-'+(c.bd||'');
+const issueHTML=issues=>issues.map(i=>`<span class="pill ${i.level==='err'?'bad':i.level==='warn'?'warn':''}">${esc(i.text)}</span>`).join('');
+function renderReview(){
+  const rows=review.rows;const inc=rows.filter(r=>r.include);
+  const errs=inc.filter(r=>hasErr(r.rec)).length;const warns=inc.filter(r=>!hasErr(r.rec)&&r.rec.issues.some(i=>i.level==='warn')).length;
+  let extra='';
+  if(review.source==='pdf'||review.source==='image')extra=`<div class="banner"><span>This was read from a ${review.source==='pdf'?'PDF':'picture'}, so mistakes are possible. Check each field below before saving. Only the details needed for birthdays were kept. ID numbers, addresses and account details were ignored.</span></div>`;
+  if(review.note&&review.note.startsWith('cols:'))extra+=`<div class="banner info"><span>Your file has no column for: ${esc(review.note.slice(5).split(',').map(k=>({name:'name',birthday:'birthday',phone:'phone',email:'email',am:'account manager',company:'company'})[k]).join(', '))}. Those fields are left blank.</span></div>`;
+  $('#reviewSummary').innerHTML=`${extra}<p><b>${rows.length}</b> row${rows.length===1?'':'s'} found in ${esc(review.fileName)}. <b>${inc.length-errs-warns}</b> ready, <b>${warns}</b> worth a quick check, <b>${errs}</b> can't be reminded until fixed.</p>`;
+  $('#reviewList').innerHTML=rows.map((r,i)=>{const c=r.rec;const err=hasErr(c);
+    return`<div class="rcard ${err?'err':''} ${r.include?'':'skip'}" data-i="${i}">
+      <div class="rcard-head"><label class="check"><input type="checkbox" data-act="inc" ${r.include?'checked':''}> Row ${i+1}: ${esc(c.name||'(no name)')}</label>
+      <span class="pill ${err?'bad':c.bm?'good':''}">${c.bm?'Birthday '+esc(fmtBday(c)):'No birthday'}</span></div>
+      ${c.issues.length?`<div class="issues">${issueHTML(c.issues)}</div>`:''}
+      <details ${err||c.issues.some(x=>x.level==='warn')?'open':''}><summary class="small">Edit details</summary>
+      <div class="grid2" style="margin-top:8px">
+        ${fieldHTML('name','Customer name',r.raw.name)}${fieldHTML('title','Title (optional)',r.raw.title)}
+        ${fieldHTML('nick','Preferred name / 称呼 (optional)',r.raw.nick)}
+        ${fieldHTML('company','Company',r.raw.company)}${fieldHTML('birthday','Birthday',rawDate(r.raw.birthday))}
+        ${fieldHTML('phone','Phone',r.raw.phone)}${fieldHTML('email','Email',r.raw.email)}
+        ${fieldHTML('am','Account manager',r.raw.am)}
+      </div></details></div>`}).join('');
+  $('#saveImport').textContent=`Save ${inc.length} customer${inc.length===1?'':'s'}`;$('#saveImport').disabled=!inc.length}
+function rawDate(v){if(typeof v==='number'){const p=parseDate(v);return p.err?String(v):`${p.d} ${MON[p.m-1]}${p.y?' '+p.y:''}`}return v??''}
+const fieldHTML=(k,label,v)=>`<label class="field">${label}<input type="text" data-k="${k}" value="${esc(v??'')}"></label>`;
+$('#reviewList').addEventListener('change',e=>{
+  const card=e.target.closest('.rcard');if(!card)return;const r=review.rows[+card.dataset.i];
+  if(e.target.dataset.act==='inc'){r.include=e.target.checked;r.touched=true}
+  else if(e.target.dataset.k){r.raw[e.target.dataset.k]=e.target.value;const keep=r.rec.id;r.rec=buildRecord(r.raw,state.settings.dateOrder);r.rec.id=keep;markDuplicates()}
+  renderReview()});
+$('#importMode').addEventListener('change',()=>{if(review){review.rows.forEach(r=>r.touched=false);markDuplicates();renderReview()}});
+$('#cancelImport').addEventListener('click',()=>{review=null;$('#reviewPanel').hidden=true;$('#fileIn').value=''});
+$('#saveImport').addEventListener('click',async()=>{
+  const inc=review.rows.filter(r=>r.include).map(r=>r.rec);
+  const mode=$('#importMode').value;const cur=state.isExample?0:state.customers.length;
+  const ok=await confirmBox({title:'Save these customers?',body:mode==='replace'&&cur?`This replaces your ${cur} current customer${cur===1?'':'s'} with ${inc.length} from ${review.fileName}. Your current list will be gone unless you downloaded a backup.`:`This saves ${inc.length} customer${inc.length===1?'':'s'} from ${review.fileName}${mode==='add'&&cur?` to your list of ${cur}`:''}.`,okText:'Save customers',danger:mode==='replace'&&cur>0});
+  if(!ok)return;commitImport(mode);});
+function commitImport(mode){
+  const inc=review.rows.filter(r=>r.include).map(r=>r.rec);
+  if(mode==='replace'||state.isExample)state.customers=inc;else state.customers=state.customers.concat(inc);
+  if(review.settings)state.settings={...state.settings,...review.settings};
+  state.isExample=false;saveState();review=null;$('#reviewPanel').hidden=true;$('#fileIn').value='';
+  toast(`Saved ${inc.length} customer${inc.length===1?'':'s'}`);renderAll();showTab('week')}
+
+/* ---------- messages ---------- */
+const STYLES={classic:'Classic · 正式',warm:'Warm · 温馨',short:'Short · 简短',blessings:'Blessings · 吉祥'};
+const LANGS={en:'English',zh:'华语 中文',bm:'Bahasa Melayu'};
+const LANG_TAG={en:'en',zh:'zh',bm:'ms'};
+const sender=c=>c.am||state.settings.myName.trim()||'Your account manager';
+/* How a customer is addressed: full = title + full name, name = full name only, nick = their preferred name / 称呼 */
+const ADDR={full:'Title + full name',name:'Full name only',nick:'Preferred name / 称呼'};
+const addrOf=c=>c.addr||state.settings.addressBy||'full';
+const displayName=c=>addrOf(c)==='nick'&&(c.nick||'').trim()?c.nick.trim():(c.name||'Valued Customer');
+function salutation(c,lang){
+  const mode=addrOf(c),nick=(c.nick||'').trim();
+  if(mode==='nick'&&nick)return nick;
+  if(mode==='name')return c.name;
+  const t=(c.title||'').trim();const k=t.toLowerCase().replace(/[.']/g,'');
+  if(lang==='en')return t?t+' '+c.name:c.name;
+  if(lang==='bm'){const map={madam:'Puan',mdm:'Puan',mrs:'Puan',ms:'Cik',miss:'Cik',mr:'Encik',mister:'Encik',sir:'Tuan'};return t?(map[k]||t)+' '+c.name:c.name}
+  const zmap={madam:'女士',mdm:'女士',mrs:'女士',ms:'女士',puan:'女士',miss:'小姐',cik:'小姐',mr:'先生',mister:'先生',encik:'先生',tuan:'先生',sir:'先生',dr:'博士'};
+  const before={dato:'拿督',datuk:'拿督',datin:'拿汀','tan sri':'丹斯里','puan sri':'潘斯里'};
+  if(!t)return c.name;if(before[k])return before[k]+' '+c.name;return c.name+' '+(zmap[k]||t)}
+/* The three choices shown on a customer's card, previewed with their own name in the wish language. */
+function addrChoices(c,lang){const as=m=>salutation({...c,addr:m},lang);
+  return[['full',as('full')],['name',c.name],['nick',c.nick?c.nick:'称呼 (type one below)']]}
+function autoStyle(c){return['classic','warm','blessings'][hash(c.name)%3]}
+const styleOf=c=>c.style||(state.settings.style&&state.settings.style!=='auto'?state.settings.style:autoStyle(c));
+const langOf=c=>c.lang||state.settings.lang||'en';
+function templateMessages(c,style){
+  const s=sender(c),org=state.settings.orgName.trim(),co=(c.company||'').trim();
+  const en=salutation(c,'en'),bm=salutation(c,'bm'),zn=salutation(c,'zh'),zs=(/^[A-Za-z]/.test(zn)?' ':'')+zn;
+  const sign=w=>`${w},\n${s}`+(org?`\n${org}`:'');
+  const zsign=w=>`${w}\n${s}`+(org?`\n${org}`:'');
+  if(style==='warm')return{
+    en:`Dear ${en},\n\nWishing you a very happy birthday! May the year ahead bring you joy, good health and many happy moments with your loved ones.\n\n${co?`Here's to another great year for you and the team at ${co}. `:''}Thank you for being such a valued client${org?` of ${org}`:''}.\n\n${sign('Best wishes')}`,
+    bm:`Salam sejahtera ${bm},\n\nSelamat Hari Lahir! Semoga tahun yang mendatang membawa kegembiraan, kesihatan yang baik dan saat-saat bahagia bersama insan tersayang.\n\n${co?`Semoga tahun ini terus cemerlang untuk anda dan pasukan di ${co}. `:''}Terima kasih kerana menjadi pelanggan yang amat kami hargai${org?` di ${org}`:''}.\n\n${sign('Salam ikhlas')}`,
+    zh:`${zn}${/[A-Za-z]$/.test(zn)?' ':''}您好！\n\n祝您生日快乐！愿新的一岁充满欢笑与健康，和家人共享更多温馨美好的时光。\n\n${co?`也祝您和${co}团队来年更上一层楼！`:''}感谢您一直以来的支持${org?`与对${org}的信赖`:''}。\n\n${zsign('祝好')}`};
+  if(style==='short')return{
+    en:`Happy Birthday, ${en}! 🎉 Wishing you a wonderful year ahead filled with good health, happiness and success. Enjoy your special day!\n\n- ${s}${org?`, ${org}`:''}`,
+    bm:`Selamat Hari Lahir, ${bm}! 🎉 Semoga tahun ini dipenuhi kesihatan, kebahagiaan dan kejayaan. Selamat menyambut hari istimewa anda!\n\n- ${s}${org?`, ${org}`:''}`,
+    zh:`${zn}，生日快乐！🎉 祝您身体健康、万事如意、心想事成！\n\n—— ${s}${org?`，${org}`:''}`};
+  if(style==='blessings')return{
+    en:`Dear ${en},\n\nHappy Birthday! May the year ahead bring you abundant blessings: good health, prosperity, peace and joy for you and your family. May all your wishes come true${co?`, and may ${co} continue to flourish`:''}.\n\n${sign('With warm wishes')}`,
+    bm:`Kepada ${bm} yang dihormati,\n\nSelamat Hari Lahir! Semoga tahun yang mendatang melimpah dengan keberkatan: kesihatan, kemakmuran, ketenangan dan kegembiraan untuk anda sekeluarga. Semoga segala hajat anda tercapai${co?` dan ${co} terus maju jaya`:''}.\n\n${sign('Salam mesra')}`,
+    zh:`尊敬的${zs}：\n\n恭祝您生日快乐！愿您福气满满、好运连连，与家人身体健康、阖家幸福、财源广进、万事如意！${co?`\n\n祝${co}生意兴隆、大展宏图！`:''}\n\n${zsign('衷心祝福')}`};
+  return{
+    en:`Dear ${en},\n\nHappy Birthday! ${org?`On behalf of all of us at ${org}, I`:'I'} wish you good health, happiness and continued success in the year ahead${co?`, for you and for ${co}`:''}.\n\nThank you for your trust and support. It is a privilege to serve you.\n\n${sign('Warm regards')}`,
+    bm:`Kepada ${bm} yang dihormati,\n\nSelamat Hari Lahir! ${org?`Bagi pihak kami semua di ${org}, saya`:'Saya'} mendoakan anda sentiasa sihat, bahagia dan terus berjaya pada tahun yang mendatang${co?`, bersama ${co}`:''}.\n\nTerima kasih atas kepercayaan dan sokongan anda. Kami berbesar hati dapat berkhidmat untuk anda.\n\n${sign('Salam hormat')}`,
+    zh:`亲爱的${zs}：\n\n祝您生日快乐！${org?`谨代表${org}全体同仁，`:''}衷心祝愿您在新的一岁里身体健康、幸福快乐、事事顺心${co?`，${co}业务蒸蒸日上`:''}。\n\n感谢您一直以来的信任与支持，能为您服务是我们的荣幸。\n\n${zsign('诚挚祝福')}`}}
+function messagesFor(c,lang){lang=lang||langOf(c);const style=styleOf(c);const t=templateMessages(c,style);const cu=c.custom||{};
+  return{style,lang,text:cu[lang]!=null?cu[lang]:t[lang],edited:cu[lang]!=null,t}}
+const waUrl=(c,text)=>`https://wa.me/${c.phone}?text=${encodeURIComponent(text)}`;
+const WA_ICON='<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3z"/></svg>';
+
+/* ---------- card image ---------- */
+const THEMES={
+  jade:{label:'Jade & gold',bg:['#11604F','#073229'],eyebrow:'#E8CF8E',main:'#F6E7C1',sub:'#E8CF8E',name:'#FFFFFF',from:'#CFE5DD',deco:'songket'},
+  red:{label:'Red & gold · 红金',bg:['#B3202A','#6E0F16'],eyebrow:'#F6D58A',main:'#FBE3A6',sub:'#F6D58A',name:'#FFFFFF',from:'#F8DCC9',deco:'lanterns'},
+  blush:{label:'Blush balloons',bg:['#FCEDEA','#F4D0CB'],eyebrow:'#A0485A',main:'#7A2638',sub:'#9C4A58',name:'#3E1520',from:'#7A3F4A',deco:'balloons'},
+  confetti:{label:'Confetti',bg:['#FFFEFA','#F1EFFA'],eyebrow:'#5A63A0',main:'#1F2A5A',sub:'#4E5896',name:'#121A3D',from:'#4A5280',deco:'confetti'},
+  midnight:{label:'Midnight stars',bg:['#1D2A58','#0A0F2A'],eyebrow:'#F0CF7A',main:'#F3D78A',sub:'#C8D2F2',name:'#FFFFFF',from:'#B9C4EA',deco:'stars'}};
+const CARD_TEXT={en:{eyebrow:'WARMEST WISHES',main:'Happy Birthday'},bm:{eyebrow:'UCAPAN IKHLAS',main:'Selamat Hari Lahir'},zh:{eyebrow:'衷心祝福',main:'生日快乐'}};
+const CJK_SANS='"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif';
+let logoImg=null;
+function setLogoImg(){logoImg=null;if(state.settings.logo){const im=new Image();im.onload=()=>{logoImg=im;refreshOpenCard();drawThumbs()};im.src=state.settings.logo}}
+let fontsReady=null;
+function ensureFonts(){if(!fontsReady)fontsReady=Promise.all([['italic 600 100px "Playfair Display"'],['700 80px "Bricolage Grotesque"'],['600 40px Inter'],['500 30px Inter'],['700 100px "Noto Serif SC"','生日快乐'],['600 40px "Noto Sans SC"','衷心祝福敬贺生日快乐'],['34px "Noto Sans SC"','祝您生日快乐']].map(a=>document.fonts.load(...a).catch(()=>{}))).catch(()=>{});return fontsReady}
+function fitFont(x,text,weightFam,maxPx,maxW){let px=maxPx;do{x.font=`${weightFam.replace('{px}',px)}`;if(x.measureText(text).width<=maxW)break;px-=2}while(px>20);return px}
+function cardLangs(c){const v=state.settings.cardLang;if(v&&v!=='auto'){const [m,s]=v.split('_');return{m,s:s||null}}const L=langOf(c);return L==='en'?{m:'en',s:'bm'}:{m:L,s:'en'}}
+function drawCard(cv,c,opts={}){
+  const S=cv.width,x=cv.getContext('2d'),u=S/1080;
+  const th=THEMES[opts.theme||c.theme||state.settings.theme]||THEMES.jade;const {m,s}=opts.langs||cardLangs(c);
+  const g=x.createLinearGradient(0,0,S,S);g.addColorStop(0,th.bg[0]);g.addColorStop(1,th.bg[1]);x.fillStyle=g;x.fillRect(0,0,S,S);
+  const rnd=mulberry32(hash(c.name||'guest'));x.save();
+  if(th.deco==='songket'){x.globalAlpha=.10;x.strokeStyle=th.sub;x.lineWidth=2*u;const st=72*u;
+    for(let yy=-st;yy<S+st;yy+=st)for(let xx=-st;xx<S+st;xx+=st){const cx=xx+((yy/st)%2?st/2:0);x.beginPath();x.moveTo(cx,yy-st*.35);x.lineTo(cx+st*.35,yy);x.lineTo(cx,yy+st*.35);x.lineTo(cx-st*.35,yy);x.closePath();x.stroke()}
+    x.globalAlpha=1;x.fillStyle=th.sub;[[110,110],[S/u-110,110],[110,S/u-110],[S/u-110,S/u-110]].forEach(([a,b])=>{x.save();x.translate(a*u,b*u);x.rotate(Math.PI/4);x.fillRect(-14*u,-14*u,28*u,28*u);x.restore()})}
+  if(th.deco==='lanterns'){x.globalAlpha=.10;x.strokeStyle=th.sub;x.lineWidth=2*u;
+    for(let yy=0;yy<S+90*u;yy+=90*u)for(let xx=0;xx<S+90*u;xx+=90*u){x.beginPath();x.arc(xx,yy,45*u,0,Math.PI);x.stroke()}
+    x.globalAlpha=1;[[150,0],[930,0]].forEach(([lx],i)=>{const cx=lx*u,len=(i?150:110)*u;x.strokeStyle=th.sub;x.lineWidth=3*u;x.beginPath();x.moveTo(cx,0);x.lineTo(cx,len);x.stroke();
+      x.fillStyle='#E8463E';x.beginPath();x.ellipse(cx,len+55*u,52*u,62*u,0,0,Math.PI*2);x.fill();x.fillStyle=th.sub;x.fillRect(cx-30*u,len-8*u,60*u,14*u);x.fillRect(cx-30*u,len+110*u,60*u,12*u);
+      x.strokeStyle='rgba(246,213,138,.6)';x.lineWidth=2*u;for(let k=-1;k<=1;k++){x.beginPath();x.ellipse(cx,len+55*u,Math.abs(k)*30*u+8*u,62*u,0,0,Math.PI*2);x.stroke()}
+      x.strokeStyle=th.sub;x.beginPath();x.moveTo(cx,len+122*u);x.lineTo(cx,len+170*u);x.stroke()})}
+  if(th.deco==='balloons'){const cols=['#F28C8C','#F6B26B','#E9C46A','#F7A1C4','#E07A8F'];
+    for(let i=0;i<7;i++){const left=i%2===0;const bx=(left?60+rnd()*200:820+rnd()*200)*u,by=(80+rnd()*260+(i>3?520:0))*u,r=(55+rnd()*40)*u;
+      x.globalAlpha=.55;x.fillStyle=cols[i%cols.length];x.beginPath();x.ellipse(bx,by,r*.85,r,0,0,Math.PI*2);x.fill();
+      x.globalAlpha=.35;x.strokeStyle=th.sub;x.lineWidth=2*u;x.beginPath();x.moveTo(bx,by+r);x.bezierCurveTo(bx-20*u,by+r+60*u,bx+20*u,by+r+100*u,bx,by+r+150*u);x.stroke()}}
+  if(th.deco==='confetti'){const cols=['#E76F51','#2A9D8F','#E9C46A','#5A63A0','#F4A3B4','#3D8BD9'];
+    for(let i=0;i<120;i++){const band=rnd();let cx=rnd()*S,cy=band<.45?rnd()*230*u:band<.85?S-rnd()*190*u:rnd()*S;if(band>=.85)cx=rnd()<.5?rnd()*120*u:S-rnd()*120*u;
+      x.save();x.translate(cx,cy);x.rotate(rnd()*Math.PI);x.globalAlpha=.85;x.fillStyle=cols[i%cols.length];x.fillRect(-9*u,-4*u,18*u,8*u);x.restore()}}
+  if(th.deco==='stars'){x.fillStyle=th.main;for(let i=0;i<90;i++){x.globalAlpha=.3+rnd()*.6;x.beginPath();x.arc(rnd()*S,rnd()*S,(1+rnd()*2.5)*u,0,Math.PI*2);x.fill()}
+    x.globalAlpha=.9;for(let i=0;i<9;i++){const sx=rnd()*S,sy=rnd()<.5?rnd()*260*u:S-rnd()*220*u,r=(10+rnd()*16)*u;x.beginPath();x.moveTo(sx,sy-r);x.quadraticCurveTo(sx,sy,sx+r,sy);x.quadraticCurveTo(sx,sy,sx,sy+r);x.quadraticCurveTo(sx,sy,sx-r,sy);x.quadraticCurveTo(sx,sy,sx,sy-r);x.fill()}}
+  x.restore();
+  x.strokeStyle=th.sub;x.globalAlpha=.55;x.lineWidth=3*u;x.strokeRect(44*u,44*u,S-88*u,S-88*u);x.globalAlpha=1;
+  let off=0;
+  if(logoImg){const h=110*u;let w=logoImg.width*h/logoImg.height;if(w>380*u)w=380*u;const hh=logoImg.height*w/logoImg.width;
+    x.fillStyle='rgba(255,255,255,.9)';const pad=14*u;roundRect(x,(S-w)/2-pad,96*u-pad,w+pad*2,hh+pad*2,14*u);x.fill();x.drawImage(logoImg,(S-w)/2,96*u,w,hh);off=40}
+  x.textAlign='center';x.textBaseline='alphabetic';
+  const ls=v=>{if('letterSpacing'in x)x.letterSpacing=v};
+  x.fillStyle=th.eyebrow;x.font=`600 ${30*u}px Inter, ${CJK_SANS}`;ls(`${(m==='zh'?12:7)*u}px`);x.fillText(CARD_TEXT[m].eyebrow,S/2,(300+off)*u);ls('0px');
+  const main=CARD_TEXT[m].main;x.fillStyle=th.main;
+  if(m==='zh'){ls(`${16*u}px`);fitFont(x,main,`700 {px}px "Noto Serif SC","Songti SC","SimSun",serif`,150*u,S-200*u);x.fillText(main,S/2+8*u,(460+off)*u);ls('0px')}
+  else{fitFont(x,main,'italic 600 {px}px "Playfair Display", Georgia, serif',(m==='bm'?112:138)*u,S-170*u);x.fillText(main,S/2,(450+off)*u)}
+  if(s){x.fillStyle=th.sub;x.font=`600 ${44*u}px Inter, ${CJK_SANS}`;ls(`${(s==='zh'?10:2)*u}px`);x.fillText(CARD_TEXT[s].main,S/2,(530+off)*u);ls('0px')}
+  x.fillStyle=th.sub;x.globalAlpha=.7;x.fillRect(S/2-60*u,(588+off)*u,120*u,3*u);x.globalAlpha=1;
+  const nm=displayName(c);x.fillStyle=th.name;
+  const px=fitFont(x,nm,`700 {px}px "Bricolage Grotesque", "Segoe UI", ${CJK_SANS}`,92*u,S-190*u);
+  if(px<62*u&&nm.includes(' ')){const w=nm.split(' ');const half=Math.ceil(w.length/2);const l1=w.slice(0,half).join(' '),l2=w.slice(half).join(' ');
+    const p2=Math.min(fitFont(x,l1,'700 {px}px "Bricolage Grotesque", sans-serif',80*u,S-190*u),fitFont(x,l2,'700 {px}px "Bricolage Grotesque", sans-serif',80*u,S-190*u));
+    x.font=`700 ${p2}px "Bricolage Grotesque", sans-serif`;x.fillText(l1,S/2,(690+off)*u);x.fillText(l2,S/2,(690+off)*u+p2*1.1)}
+  else x.fillText(nm,S/2,(705+off)*u);
+  const org=state.settings.orgName.trim();
+  const from=m==='zh'?`${sender(c)}${org?' · '+org:''} 敬贺`:(m==='bm'?'Daripada ':'From ')+sender(c)+(org?'  ·  '+org:'');
+  x.fillStyle=th.from;fitFont(x,from,`500 {px}px Inter, ${CJK_SANS}`,32*u,S-200*u);x.fillText(from,S/2,935*u)}
+function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
+function cardBlob(c,size=1080,type='image/png',q){const cv=document.createElement('canvas');cv.width=cv.height=size;drawCard(cv,c);return new Promise(r=>cv.toBlob(r,type,q))}
+const fileSafe=s=>String(s||'customer').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+function copyImage(c,okMsg){
+  const fail="This browser can't copy images here. Open the customer and tap Save image";
+  try{if(!window.ClipboardItem||!navigator.clipboard||!navigator.clipboard.write)throw 0;
+    const p=ensureFonts().then(()=>cardBlob(c));
+    navigator.clipboard.write([new ClipboardItem({'image/png':p})]).then(()=>toast(okMsg||'Card image copied. Paste it into the chat'),()=>toast(fail))}
+  catch(e){toast(fail)}}
+
+/* ---------- saving files ---------- */
+const inArtifact=!!(window.claude&&typeof window.claude.use==='function');
+let dlNs;
+async function downloadsNs(){if(!inArtifact)return null;if(dlNs===undefined){try{dlNs=await window.claude.use('downloads')}catch(e){dlNs=null}}return dlNs}
+async function saveFile(name,blob){
+  const d=await downloadsNs();
+  if(d){try{await d.save({filename:name,data:blob});toast('Saved '+name)}catch(e){toast(e&&e.code==='declined'?'Download cancelled':"Couldn't save the file here")}return}
+  if(inArtifact){toast("Downloads aren't available in this view");return}
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('Saved '+name)}
+async function copyText(text,label){try{await navigator.clipboard.writeText(text);toast((label||'Text')+' copied')}catch(e){toast('Select the text and copy it by hand')}}
+
+/* ---------- PDF ---------- */
+const pdfText=s=>String(s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,'-').replace(/\u00B7/g,'-').replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g,'').replace(/ +\n/g,'\n').replace(/[ ]{2,}/g,' ');
+/* jsPDF's built-in fonts have no Chinese, so Chinese wishes go into the PDF as a sharp picture of the text. */
+async function textImage(text,wPx){
+  const font=`34px ${CJK_SANS}`;try{await document.fonts.load('34px "Noto Sans SC"',text)}catch(e){}
+  const m=document.createElement('canvas').getContext('2d');m.font=font;const lh=54;const lines=[];
+  const re=/[\u2E80-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u3000-\u303F]|[^\s\u2E80-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\u3000-\u303F]+|\s+/g;
+  for(const para of text.split('\n')){if(!para){lines.push('');continue}let line='';
+    for(const t of para.match(re)||[]){const test=line+t;if(m.measureText(test).width>wPx&&line.trim()){lines.push(line.trimEnd());line=t.trimStart()}else line=test}lines.push(line)}
+  const cv=document.createElement('canvas');cv.width=wPx;cv.height=lines.length*lh+12;const x=cv.getContext('2d');
+  x.fillStyle='#F7FAF9';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#13241F';x.font=font;x.textBaseline='top';lines.forEach((l,i)=>x.fillText(l,0,i*lh+8));
+  return{url:cv.toDataURL('image/jpeg',.92),w:cv.width,h:cv.height}}
+const PDF_LABEL={en:'ENGLISH  -  copy and paste',bm:'BAHASA MELAYU  -  copy and paste',zh:'CHINESE  -  tap the green WhatsApp button to send this wish'};
+async function buildPDF(list,label){
+  await loadLib('jspdf');await ensureFonts();
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});const W=210,M=16;const t=today();
+  const gen=`${t.d} ${MONTH_FULL[t.m-1]} ${t.y}`;
+  const head=()=>{doc.setFillColor(14,107,88);doc.rect(0,0,W,4,'F')};
+  const foot=()=>{doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(120);doc.text(pdfText(`Birthday Buddy - generated ${gen} - customer data stays with you`),M,290);doc.text(`Page ${doc.getNumberOfPages()}`,W-M,290,{align:'right'})};
+  head();doc.setTextColor(19,36,31);doc.setFont('helvetica','bold');doc.setFontSize(22);doc.text('Customer birthday list',M,24);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(86,102,95);doc.text(pdfText(`${label}  |  ${list.length} customer${list.length===1?'':'s'}  |  made on ${gen}`),M,32);
+  doc.setFontSize(9.5);doc.text('Each customer has a page with the card image, the wish, and a WhatsApp button that opens the chat with the wish filled in.',M,39);
+  let y=50;doc.setFillColor(231,238,235);doc.rect(M,y-5,W-2*M,8,'F');doc.setTextColor(19,36,31);doc.setFont('helvetica','bold');doc.setFontSize(9);
+  const cols=[M+2,M+24,M+44,M+86,M+120,M+150];['Birthday','When','Customer','Company','Phone','Account mgr'].forEach((h,i)=>doc.text(h,cols[i],y));
+  doc.setFont('helvetica','normal');y+=8;
+  list.forEach(c=>{const o=nextOcc(c);if(y>280){foot();doc.addPage();head();y=20}
+    const date=o?`${o.d} ${MON[o.m-1]}, ${o.dow}`:'-';const when=o?(o.days===0?'TODAY':o.days===1?'Tomorrow':`In ${o.days} days`):'-';
+    [date,when,c.name,c.company||'-',c.phone?fmtPhone(c.phone):'-',sender(c)].forEach((v,i)=>{const max=[21,19,41,33,29,28][i];doc.setFont('helvetica',i===1&&o&&o.days<=3?'bold':'normal');doc.text(doc.splitTextToSize(pdfText(v),max)[0],cols[i],y)});
+    doc.setDrawColor(211,221,217);doc.line(M,y+2.5,W-M,y+2.5);y+=7.5});
+  foot();
+  for(const c of list){
+    doc.addPage();head();const o=nextOcc(c);const L=langOf(c);
+    const blob=await cardBlob(c,800,'image/jpeg',.88);const url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob)});
+    doc.addImage(url,'JPEG',M,14,62,62);
+    const X=M+70;doc.setTextColor(19,36,31);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text(doc.splitTextToSize(pdfText(c.name),W-M-X),X,22);
+    doc.setFontSize(10.5);doc.setFont('helvetica','normal');doc.setTextColor(86,102,95);
+    const lines=[
+      ['Birthday',o?`${o.dow}, ${o.d} ${MONTH_FULL[o.m-1]} ${o.y}${o.days===0?' - TODAY':o.days===1?' - tomorrow':` - in ${o.days} days`}${o.shifted?' (born 29 Feb)':''}`:'Missing'],
+      ['Company',c.company||'-'],['WhatsApp / phone',c.phone?fmtPhone(c.phone):'-'],['Email',c.email||'-'],['Account manager',sender(c)]];
+    let yy=32;lines.forEach(([k,v])=>{doc.setFont('helvetica','bold');doc.setTextColor(86,102,95);doc.text(k,X,yy);doc.setFont('helvetica','normal');doc.setTextColor(19,36,31);doc.text(doc.splitTextToSize(pdfText(v),W-M-X-34)[0],X+34,yy);yy+=7});
+    if(o&&o.days===3){doc.setFillColor(252,235,207);doc.roundedRect(X,yy-3,W-M-X,8,2,2,'F');doc.setTextColor(154,90,11);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text('Birthday in 3 days: prepare this wish now.',X+3,yy+2.4);yy+=9}
+    if(c.phone){doc.setFillColor(18,140,74);doc.roundedRect(X,yy-1,62,9,2,2,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.text('WhatsApp this customer  >',X+4,yy+5);doc.link(X,yy-1,62,9,{url:waUrl(c,messagesFor(c,L).text)})}
+    let my=94;
+    const blocks=[L,...(L==='en'?['bm']:['en'])];
+    for(const lang of blocks){const txt=messagesFor(c,lang).text;
+      if(lang==='zh'){const img=await textImage(txt,1600);const wMm=W-2*M-10,hMm=img.h/img.w*wMm;const h=hMm+8;
+        if(my+h>282){foot();doc.addPage();head();my=20}
+        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(14,107,88);doc.text(PDF_LABEL.zh,M,my);
+        doc.setDrawColor(211,221,217);doc.setFillColor(247,250,249);doc.roundedRect(M,my+3,W-2*M,h,2.5,2.5,'FD');doc.addImage(img.url,'JPEG',M+5,my+7,wMm,hMm);my+=h+13;continue}
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);
+      const wrapped=doc.splitTextToSize(pdfText(txt),W-2*M-10);const h=wrapped.length*4.9+8;
+      if(my+h>282){foot();doc.addPage();head();my=20}
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(14,107,88);doc.text(PDF_LABEL[lang],M,my);
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(19,36,31);
+      doc.setDrawColor(211,221,217);doc.setFillColor(247,250,249);doc.roundedRect(M,my+3,W-2*M,h,2.5,2.5,'FD');doc.text(wrapped,M+5,my+9.5);my+=h+13}
+    foot()}
+  return doc.output('blob')}
+async function exportPDF(){
+  const sel=$('#pdfRange').value;let list,label;
+  const withOcc=state.customers.filter(c=>!hasErr(c)).map(c=>({c,o:nextOcc(c)})).filter(x=>x.o).sort((a,b)=>a.o.days-b.o.days);
+  if(sel==='7'||sel==='30'){list=withOcc.filter(x=>x.o.days<=+sel).map(x=>x.c);label=`Birthdays in the next ${sel} days`}
+  else if(sel==='ticked'){list=withOcc.filter(x=>ticked.has(x.c.id)).map(x=>x.c);label='Selected customers'}
+  else{list=withOcc.map(x=>x.c);label='All customers'}
+  if(!list.length){toast(sel==='ticked'?'Tick customers on the Customers tab first':'No birthdays in that period');return}
+  const b=$('#pdfBtn');b.disabled=true;b.innerHTML='<span class="spinner"></span> Making PDF…';
+  try{const t=today();const blob=await buildPDF(list,label);await saveFile(`birthday-list-${t.y}-${String(t.m).padStart(2,'0')}-${String(t.d).padStart(2,'0')}.pdf`,blob)}
+  catch(e){toast("Couldn't make the PDF: "+(e.message||e))}
+  finally{b.disabled=false;b.textContent='Download PDF'}}
+
+/* ---------- calendar ---------- */
+const pad2=n=>String(n).padStart(2,'0');
+const icsEsc=s=>String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+function reminderDate(c){let m=c.bm,d=(c.bm===2&&c.bd===29)?28:c.bd;const dt=new Date(Date.UTC(2025,m-1,d-3));return{y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()}}
+const ymd=o=>`${o.y}${pad2(o.m)}${pad2(o.d)}`;
+const plus1=o=>{const dt=new Date(Date.UTC(o.y,o.m-1,o.d+1));return{y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()}};
+function buildICS(){
+  const now=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Birthday Buddy//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Customer birthdays'];
+  const ev=(id,start,sum,desc,rule)=>{L.push('BEGIN:VEVENT',`UID:${id}@birthday-buddy`,`DTSTAMP:${now}`,`DTSTART;VALUE=DATE:${ymd(start)}`,`DTEND;VALUE=DATE:${ymd(plus1(start))}`,`RRULE:${rule}`,`SUMMARY:${icsEsc(sum)}`,`DESCRIPTION:${icsEsc(desc)}`,'TRANSP:TRANSPARENT','BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${icsEsc(sum)}`,'TRIGGER:PT9H','END:VALARM','END:VEVENT')};
+  let n=0;
+  state.customers.filter(c=>!hasErr(c)).forEach(c=>{const who=c.name+(c.company?` (${c.company})`:'');
+    ev(`${c.id}-r3`,reminderDate(c),`Birthday in 3 days: ${who}`,`${c.name}'s birthday is on ${c.bd} ${MONTH_FULL[c.bm-1]}. Open Birthday Buddy to prepare the card and message. Account manager: ${sender(c)}`,'FREQ=YEARLY');
+    ev(`${c.id}-d0`,{y:2025,m:c.bm,d:(c.bm===2&&c.bd===29)?28:c.bd},`Birthday today: ${who}`,`Send ${c.name} the birthday wish today.`,'FREQ=YEARLY');n++});
+  const t=today();const dt=new Date(Date.UTC(t.y,t.m-1,t.d));while(dt.getUTCDay()!==1)dt.setUTCDate(dt.getUTCDate()+1);
+  ev('weekly-check',{y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()},'Weekly birthday check (Birthday Buddy)','Open Birthday Buddy and look at This week.','FREQ=WEEKLY;BYDAY=MO');
+  L.push('END:VCALENDAR');return{text:L.join('\r\n'),count:n}}
+function gcalLink(c){const r=reminderDate(c);const t=today();const start={y:t.y,m:r.m,d:r.d};
+  const p=new URLSearchParams({action:'TEMPLATE',text:`Birthday in 3 days: ${c.name}`,dates:`${ymd(start)}/${ymd(plus1(start))}`,details:`Birthday on ${c.bd} ${MONTH_FULL[c.bm-1]}. Open Birthday Buddy to prepare the wish.`,recur:'RRULE:FREQ=YEARLY'});
+  return'https://calendar.google.com/calendar/render?'+p.toString()}
+function weeklyGcal(){const t=today();const dt=new Date(Date.UTC(t.y,t.m-1,t.d));while(dt.getUTCDay()!==1)dt.setUTCDate(dt.getUTCDate()+1);const s={y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate()};
+  return'https://calendar.google.com/calendar/render?'+new URLSearchParams({action:'TEMPLATE',text:'Weekly birthday check (Birthday Buddy)',dates:`${ymd(s)}/${ymd(plus1(s))}`,details:'Open Birthday Buddy and look at This week.',recur:'RRULE:FREQ=WEEKLY;BYDAY=MO'}).toString()}
+
+/* ---------- rendering ---------- */
+function whenPill(o){if(o.days===0)return'<span class="pill today">Today</span>';if(o.days===3)return'<span class="pill due">In 3 days · prepare now</span>';if(o.days===1)return'<span class="pill">Tomorrow</span>';return`<span class="pill">In ${o.days} days</span>`}
+function rowHTML(c,o,opts={}){
+  const yr=o?String(o.y):'';const done=o&&c.wished&&c.wished[yr];
+  const meta=[c.company,sender(c)?'AM: '+sender(c):''].filter(Boolean).join(' · ');
+  const warn=c.issues.some(i=>i.level==='warn')?'<span class="pill warn">Check details</span>':'';
+  return`<button class="row ${o&&o.days===3&&!done?'is-due':''}" data-open="${c.id}">
+    <div class="datechip">${o?`<b>${o.d}</b><span>${MON[o.m-1]} · ${o.dow}</span>`:'<b>?</b><span>No date</span>'}</div>
+    <div class="who"><strong>${esc(c.name||'(no name)')}</strong><div class="meta">${esc(meta)}</div></div>
+    <div class="right">${o?whenPill(o):'<span class="pill bad">Fix birthday</span>'}${done?'<span class="pill good">Wished ✓</span>':warn}</div></button>`}
+function wishCardHTML(c,o){
+  const m=messagesFor(c);const yr=String(o.y);const done=c.wished&&c.wished[yr];
+  return`<article class="wish ${o.days===3&&!done?'is-due':''}" data-id="${c.id}">
+    <canvas class="thumb" width="360" height="360" data-thumb="${c.id}" role="img" aria-label="Birthday card for ${esc(c.name)}"></canvas>
+    <div class="wish-body">
+      <div class="wish-top"><div class="who"><strong>${esc(c.name)}</strong><div class="meta">${o.dow}, ${o.d} ${MON[o.m-1]}${c.company?' · '+esc(c.company):''} · AM: ${esc(sender(c))}</div></div>
+        <div class="right">${whenPill(o)}${done?'<span class="pill good">Wished ✓</span>':''}</div></div>
+      <p class="preview" lang="${LANG_TAG[m.lang]}">${esc(m.text)}</p>
+    </div>
+    <div class="wish-actions">
+      ${c.phone?`<a class="btn wa" href="${esc(waUrl(c,m.text))}" target="_blank" rel="noopener" data-wa="${c.id}">${WA_ICON} WhatsApp ${esc(c.name.split(' ')[0])}</a>`:'<span class="pill warn">No phone number</span>'}
+      <button class="btn" data-copymsg="${c.id}">Copy wish</button>
+      <button class="btn" data-copyimg="${c.id}">Copy image</button>
+      <button class="btn ghost" data-wished="${c.id}">${done?'Undo wished':'Mark wished'}</button>
+      <button class="btn ghost" data-open="${c.id}">Edit / more</button>
+    </div></article>`}
+function drawThumbs(){$$('canvas[data-thumb]').forEach(cv=>{const c=state.customers.find(x=>x.id===cv.dataset.thumb);if(c)drawCard(cv,c)})}
+function renderPrefs(){
+  const s=state.settings;
+  $('#weekLang').innerHTML=Object.entries(LANGS).map(([k,v])=>`<button class="chip" data-setlang="${k}" aria-pressed="${s.lang===k}">${v}</button>`).join('');
+  $('#weekStyle').innerHTML=`<option value="auto" ${s.style==='auto'?'selected':''}>Mix (varies by customer)</option>`+Object.entries(STYLES).map(([k,v])=>`<option value="${k}" ${s.style===k?'selected':''}>${v}</option>`).join('');
+  const ad=s.addressBy||'full';
+  $('#weekAddr').innerHTML=[['full','Title + full name (Madam Tan Mei Ling)'],['name','Full name only (Tan Mei Ling)'],['nick','称呼 / preferred name (Mei Ling, 陈小姐)']].map(([k,v])=>`<option value="${k}" ${ad===k?'selected':''}>${v}</option>`).join('')}
+function renderWeek(){
+  const t=today();$('#todayLabel').innerHTML=`${DOW[dowOf(t.y,t.m,t.d)]}, ${t.d} ${MON[t.m-1]} ${t.y}`;
+  const ok=state.customers.filter(c=>!hasErr(c)).map(c=>({c,o:nextOcc(c)})).filter(x=>x.o).sort((a,b)=>a.o.days-b.o.days||a.c.name.localeCompare(b.c.name));
+  const week=ok.filter(x=>x.o.days<=7),month=ok.filter(x=>x.o.days>7&&x.o.days<=30),fix=state.customers.filter(hasErr);
+  const due=week.filter(x=>x.o.days===3),tod=week.filter(x=>x.o.days===0);
+  const endD=new Date(Date.UTC(t.y,t.m-1,t.d+7));
+  $('#weekTitle').textContent=`${t.d} ${MON[t.m-1]} – ${endD.getUTCDate()} ${MON[endD.getUTCMonth()]}`;
+  $('#stats').innerHTML=`<div class="stat"><b>${tod.length}</b><span>Birthdays today</span></div>
+   <div class="stat due"><b>${due.length}</b><span>In 3 days: prepare now</span></div>
+   <div class="stat"><b>${week.length}</b><span>Next 7 days</span></div>
+   <div class="stat ${fix.length?'bad':''}"><b>${fix.length}</b><span>Need fixing</span></div>`;
+  renderPrefs();
+  $('#weekList').innerHTML=week.length?week.map(x=>wishCardHTML(x.c,x.o)).join(''):'<div class="empty">No birthdays in the next 7 days.</div>';
+  drawThumbs();
+  $('#monthList').innerHTML=month.length?month.map(x=>rowHTML(x.c,x.o)).join(''):'<div class="empty">No other birthdays in the next 30 days.</div>';
+  $('#fixPanel').hidden=!fix.length;$('#fixList').innerHTML=fix.map(c=>rowHTML(c,null)).join('');
+  $('#exampleBanner').innerHTML=state.isExample?`<div class="banner"><span><b>These are example customers</b>, not your real data. Import your own list to replace them.</span><button class="btn primary" data-goto="import">Import my list</button></div>`:(!state.customers.length?`<div class="banner info"><span>No customers yet. Import your list to start.</span><button class="btn primary" data-goto="import">Import my list</button></div>`:'')}
+function renderCustomers(){
+  const q=($('#search').value||'').toLowerCase().trim();
+  const all=state.customers.map(c=>({c,o:nextOcc(c)})).sort((a,b)=>(a.o?a.o.days:9999)-(b.o?b.o.days:9999)||a.c.name.localeCompare(b.c.name));
+  const shown=all.filter(x=>!q||[x.c.name,x.c.company,sender(x.c),x.c.email].join(' ').toLowerCase().includes(q));
+  $('#custCount').textContent=`${state.customers.length} customer${state.customers.length===1?'':'s'}`;
+  $('#tickInfo').textContent=ticked.size?`${ticked.size} ticked for the PDF`:'';
+  $('#custList').innerHTML=shown.length?shown.map(x=>`<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center"><label class="check" title="Include in PDF"><input type="checkbox" data-tick="${x.c.id}" ${ticked.has(x.c.id)?'checked':''} aria-label="Tick ${esc(x.c.name)} for the PDF"></label>${rowHTML(x.c,x.o)}</div>`).join(''):'<div class="empty">No customers match.</div>';
+  $('#custList').dataset.shown=shown.map(x=>x.c.id).join(',')}
+function renderSettings(){
+  const s=state.settings;$('#setOrg').value=s.orgName;$('#setMe').value=s.myName;$('#setOrder').value=s.dateOrder;$('#setCardLang').value=s.cardLang;
+  $('#setMsgLang').value=s.lang;$('#setStyle').innerHTML=$('#weekStyle').innerHTML;$('#setStyle').value=s.style;$('#setAddr').innerHTML=$('#weekAddr').innerHTML;$('#setAddr').value=s.addressBy||'full';
+  $('#setTheme').innerHTML=Object.entries(THEMES).map(([k,v])=>`<option value="${k}" ${k===s.theme?'selected':''}>${v.label}</option>`).join('');
+  $('#logoInfo').textContent=s.logo?'Logo added':'No logo added';$('#logoClear').hidden=!s.logo;
+  const n=state.customers.filter(c=>!hasErr(c)).length;
+  $('#icsArea').innerHTML=inArtifact?
+   `<p class="small">Open any customer and tap <b>Add yearly reminder</b> to put a reminder in Google Calendar 3 days before their birthday. Add the weekly check below too.</p>
+    <div class="btns"><a class="btn primary" href="${weeklyGcal()}" target="_blank" rel="noopener">Add Monday birthday check to Google Calendar</a></div>
+    <p class="small muted">To add all ${n} customers at once, use the offline copy of Birthday Buddy (birthday-buddy-offline.html) on a laptop. It can download one calendar file with every reminder.</p>`:
+   `<p class="small">Download one calendar file with every customer: a reminder 3 days before each birthday, one on the day, and a Monday check. Open it on your phone or in Google Calendar or Outlook to add them all.</p>
+    <div class="btns"><button class="btn primary" id="icsBtn">Download reminders for ${n} customers (.ics)</button><a class="btn" href="${weeklyGcal()}" target="_blank" rel="noopener">Monday check in Google Calendar</a></div>
+    <p class="small muted">Added or changed customers? Download the file again and import it once more.</p>`}
+function renderAll(){renderWeek();renderCustomers();renderSettings()}
+function setDefaultLang(v){state.settings.lang=v;saveState();renderAll();toast(`Default wish language: ${LANGS[v]}`)}
+function setDefaultStyle(v){state.settings.style=v;saveState();renderAll();toast(v==='auto'?'Wish styles now vary by customer':`Default wish style: ${STYLES[v]}`)}
+$('#weekLang').addEventListener('click',e=>{const b=e.target.closest('[data-setlang]');if(b)setDefaultLang(b.dataset.setlang)});
+$('#weekStyle').addEventListener('change',e=>setDefaultStyle(e.target.value));
+function setDefaultAddr(v){state.settings.addressBy=v;saveState();renderAll();
+  const missing=state.customers.filter(c=>!c.nick).length;
+  toast(v==='nick'?`Using 称呼 where saved${missing?`. ${missing} customer${missing===1?' has':'s have'} none yet, so they keep title + name`:''}`:v==='name'?'Wishes now use the full name only':'Wishes now use title + full name')}
+$('#weekAddr').addEventListener('change',e=>setDefaultAddr(e.target.value));
+$('#weekList').addEventListener('click',e=>{
+  const find=id=>state.customers.find(x=>x.id===id);let b;
+  if((b=e.target.closest('[data-copymsg]'))){const c=find(b.dataset.copymsg);copyText(messagesFor(c).text,'Wish')}
+  else if((b=e.target.closest('[data-copyimg]'))){copyImage(find(b.dataset.copyimg))}
+  else if((b=e.target.closest('[data-wa]'))){copyImage(find(b.dataset.wa),'Card image copied. In WhatsApp, paste it into the chat, then press Send')}
+  else if((b=e.target.closest('[data-wished]'))){const c=find(b.dataset.wished);const yr=String(nextOcc(c).y);if(c.wished[yr])delete c.wished[yr];else c.wished[yr]=true;saveState();renderWeek();toast(c.wished[yr]?'Marked as wished':'Unmarked')}});
+
+/* ---------- tabs ---------- */
+function showTab(name){$$('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===name)));$$('section.view').forEach(s=>s.hidden=s.id!=='view-'+name);try{localStorage.setItem(LS+'.tab',name)}catch(e){}window.scrollTo(0,0)}
+$('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b)showTab(b.dataset.tab)});
+document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g)showTab(g.dataset.goto);const o=e.target.closest('[data-open]');if(o)openDetail(o.dataset.open)});
+
+/* ---------- overlays ---------- */
+function confirmBox({title,body,okText='OK',danger=false,cancelText='Cancel',extraHTML=''}){
+  return new Promise(res=>{const ov=document.createElement('div');ov.className='overlay center';
+    ov.innerHTML=`<div class="confirm" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h3>${esc(title)}</h3><p>${esc(body)}</p>${extraHTML}<div class="btns" style="justify-content:flex-end"><button class="btn" data-r="0">${esc(cancelText)}</button>${okText?`<button class="btn ${danger?'danger':'primary'}" data-r="1">${esc(okText)}</button>`:''}</div></div>`;
+    ov.addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(b||e.target===ov){ov.remove();res(b?b.dataset.r==='1':false)}});
+    document.body.appendChild(ov);const f=ov.querySelector('[data-r="1"]')||ov.querySelector('[data-r]');f&&f.focus()})}
+let openId=null;
+function refreshOpenCard(){const cv=$('#cardCanvas');if(cv&&openId){const c=state.customers.find(x=>x.id===openId);if(c)drawCard(cv,c)}}
+function openDetail(id,editMode){
+  const c=state.customers.find(x=>x.id===id);if(!c)return;openId=id;
+  const o=nextOcc(c);const msg=messagesFor(c);const yr=o?String(o.y):'';const done=o&&c.wished[yr];
+  const theme=c.theme||state.settings.theme;
+  $('#layer').innerHTML=`<div class="overlay" id="ov"><div class="sheet" role="dialog" aria-modal="true" aria-label="Birthday wish for ${esc(c.name)}">
+   <div class="sheet-head"><div><div class="eyebrow">${o?`${o.dow}, ${o.d} ${MONTH_FULL[o.m-1]} · ${o.days===0?'today':o.days===1?'tomorrow':'in '+o.days+' days'}`:'Birthday missing'}</div>
+     <h2>${esc(c.name||'(no name)')}</h2><p class="small muted">${esc([c.company,'AM: '+sender(c)].filter(Boolean).join(' · '))}</p></div>
+     <button class="x" data-close aria-label="Close">×</button></div>
+   ${c.issues.length?`<div class="issues">${issueHTML(c.issues)}</div>`:''}
+   ${editMode||hasErr(c)?editFormHTML(c):''}
+   ${hasErr(c)?'':`
+   <div class="panel">
+     <div class="eyebrow">Wish language · 语言 ${c.lang?'(set for this customer)':'(your default)'}</div>
+     <div class="chips" id="langPick">${Object.entries(LANGS).map(([k,v])=>`<button class="chip" data-lang-pick="${k}" aria-pressed="${k===msg.lang}">${v}</button>`).join('')}</div>
+     <div class="eyebrow">Wish style · 祝福风格</div>
+     <div class="chips" id="styleChips">${Object.entries(STYLES).map(([k,v])=>`<button class="chip" data-style-pick="${k}" aria-pressed="${k===msg.style}">${v}</button>`).join('')}</div>
+     <div class="eyebrow">Address as · 称呼 ${c.addr?'(set for this customer)':'(your default)'}</div>
+     <div class="chips" id="addrPick">${addrChoices(c,msg.lang).map(([k,v])=>`<button class="chip" data-addr-pick="${k}" aria-pressed="${k===addrOf(c)&&(k!=='nick'||!!c.nick)}" ${k==='nick'&&!c.nick?'disabled':''}>${esc(v)}</button>`).join('')}</div>
+     <div class="grid2" style="align-items:end">
+       <label class="field">称呼 / preferred name for this customer<input type="text" id="nickIn" value="${esc(c.nick||'')}" placeholder="e.g. Mei Ling, Aunty Tan, 陈小姐, Dato' Lim"></label>
+       <div><button class="btn" id="nickSave">Use this 称呼</button></div>
+     </div>
+   </div>
+   <div class="panel"><div class="cardbox">
+     <canvas class="card" id="cardCanvas" width="1080" height="1080" role="img" aria-label="Birthday card for ${esc(c.name)}"></canvas>
+     <div style="display:grid;gap:10px;min-width:0">
+       <div class="eyebrow">Card design</div>
+       <div class="chips" id="themeChips">${Object.entries(THEMES).map(([k,v])=>`<button class="chip" data-theme-pick="${k}" aria-pressed="${k===theme}">${v.label}</button>`).join('')}</div>
+       <div class="btns"><button class="btn primary" id="copyImg">Copy image</button><button class="btn" id="saveImg">Save image</button>${!inArtifact&&navigator.canShare?'<button class="btn" id="shareImg">Share…</button>':''}</div>
+     </div></div></div>
+   <div class="panel">
+     <div class="msghead"><h3>${LANGS[msg.lang]}</h3><div class="btns">${msg.edited?'<button class="btn ghost" id="resetMsg">Undo my edits</button>':''}<button class="btn" id="copyMsg">Copy wish</button></div></div>
+     <textarea id="msgText" lang="${LANG_TAG[msg.lang]}" aria-label="Birthday wish">${esc(msg.text)}</textarea>
+     <div class="grid2">
+       <div style="display:grid;gap:6px;min-width:0">${c.phone?`<a class="btn wa" id="waBtn" href="${esc(waUrl(c,msg.text))}" target="_blank" rel="noopener">${WA_ICON} WhatsApp ${esc(c.name)}</a>
+         <span class="small muted">Opens a chat with ${fmtPhone(c.phone)} with this wish filled in, and copies the card image. Paste the image, then press Send.</span>`:'<span class="small muted">No phone number on file, so WhatsApp isn\'t available.</span>'}</div>
+       <div style="display:grid;gap:6px;min-width:0">${c.email?`<div class="btns"><a class="btn" id="mailBtn" href="#">Email ${esc(c.name.split(' ')[0])}</a><button class="btn ghost" id="copyEmail">Copy address</button></div>
+         <span class="small muted" style="word-break:break-all">${esc(c.email)}</span>`:'<span class="small muted">No email on file.</span>'}</div>
+     </div>
+   </div>
+   <div class="panel">
+     <div class="btns" style="justify-content:space-between;align-items:center">
+       ${o?`<label class="check"><input type="checkbox" id="wishedChk" ${done?'checked':''}> Mark as wished for ${yr}</label>`:''}
+       <a class="btn" href="${gcalLink(c)}" target="_blank" rel="noopener">Add yearly reminder (3 days before)</a>
+     </div>
+   </div>`}
+   <div class="btns" style="justify-content:space-between">${editMode||hasErr(c)?'':'<button class="btn" id="editBtn">Edit details</button>'}<button class="btn danger" id="delBtn">Delete customer</button></div>
+  </div></div>`;
+  const ov=$('#ov');
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-close]'))closeDetail()});
+  if(!hasErr(c)){const cv=$('#cardCanvas');drawCard(cv,c);ensureFonts().then(()=>{const cv2=$('#cardCanvas');if(cv2)drawCard(cv2,c)})}
+  wireDetail(c,msg)}
+function closeDetail(){$('#layer').innerHTML='';openId=null;renderAll()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const cf=$('.overlay.center');if(cf){cf.querySelector('[data-r="0"]').click();return}if(openId)closeDetail()}});
+function editFormHTML(c){const r=recordToRaw(c);return`<div class="panel" id="editForm"><div class="eyebrow">${hasErr(c)?'Fix the details below':'Edit details'}</div><div class="grid2">
+  ${fieldHTML('name','Customer name',r.name)}${fieldHTML('title','Title (optional, e.g. Madam, Mr, Puan)',r.title)}${fieldHTML('nick','Preferred name / 称呼 (e.g. Mei Ling, Aunty Tan, 陈小姐)',r.nick)}${fieldHTML('company','Company',r.company)}${fieldHTML('birthday','Birthday (e.g. 24 Nov 1979)',hasErr(c)?c.birthdayRaw:r.birthday)}
+  ${fieldHTML('phone','Phone / WhatsApp',r.phone)}${fieldHTML('email','Email',r.email)}${fieldHTML('am','Account manager',r.am)}</div>
+  <div class="btns"><button class="btn primary" id="saveEdit">Save changes</button>${hasErr(c)?'':'<button class="btn" id="cancelEdit">Cancel</button>'}</div></div>`}
+function wireDetail(c,msg){
+  const on=(sel,fn)=>{const el=$(sel);if(el)el.addEventListener('click',fn)};
+  on('#saveEdit',async()=>{const raw=recordToRaw(c);$$('#editForm input[data-k]').forEach(i=>raw[i.dataset.k]=i.value);
+    const rec=buildRecord(raw,state.settings.dateOrder);rec.id=c.id;rec.wished=c.wished;rec.style=c.style;rec.theme=c.theme;rec.custom=null;
+    const ok=await confirmBox({title:'Save changes?',body:`Update ${rec.name||'this customer'}'s details${rec.bm?` (birthday ${fmtBday(rec)})`:''}? Any edits to the wish text will be reset.`,okText:'Save changes'});if(!ok)return;
+    Object.assign(c,rec);saveState();toast('Saved');openDetail(c.id)});
+  on('#cancelEdit',()=>openDetail(c.id));on('#editBtn',()=>openDetail(c.id,true));
+  on('#delBtn',async()=>{const ok=await confirmBox({title:`Delete ${c.name||'this customer'}?`,body:'They will be removed from your list on this device. This can\'t be undone unless you have a backup.',okText:'Delete',danger:true});
+    if(!ok)return;state.customers=state.customers.filter(x=>x.id!==c.id);ticked.delete(c.id);saveState();toast('Deleted');closeDetail()});
+  if(hasErr(c))return;
+  const resetEdits=async()=>{if(c.custom&&Object.keys(c.custom).length){const ok=await confirmBox({title:'Change how they are addressed?',body:'Your edits to the wish will be replaced so the new name appears everywhere.',okText:'Change'});if(!ok)return false}c.custom=null;return true};
+  $('#addrPick').addEventListener('click',async e=>{const b=e.target.closest('[data-addr-pick]');if(!b||b.disabled)return;if(!(await resetEdits()))return;
+    const v=b.dataset.addrPick;c.addr=v===(state.settings.addressBy||'full')?null:v;saveState();openDetail(c.id)});
+  $('#nickSave').addEventListener('click',async()=>{const v=$('#nickIn').value.trim();if(!(await resetEdits()))return;
+    c.nick=v;c.addr=v?'nick':(c.addr==='nick'?null:c.addr);saveState();toast(v?`Wishes and card now use "${v}"`:'称呼 removed');openDetail(c.id)});
+  $('#langPick').addEventListener('click',e=>{const b=e.target.closest('[data-lang-pick]');if(!b)return;const v=b.dataset.langPick;c.lang=v===state.settings.lang?null:v;saveState();openDetail(c.id)});
+  $('#themeChips').addEventListener('click',e=>{const b=e.target.closest('[data-theme-pick]');if(!b)return;c.theme=b.dataset.themePick;saveState();$$('#themeChips .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));drawCard($('#cardCanvas'),c)});
+  $('#styleChips').addEventListener('click',async e=>{const b=e.target.closest('[data-style-pick]');if(!b)return;
+    if(c.custom&&Object.keys(c.custom).length){const ok=await confirmBox({title:'Switch style?',body:'Your edits to the wish will be replaced by the new style.',okText:'Switch'});if(!ok)return}
+    c.style=b.dataset.stylePick;c.custom=null;saveState();openDetail(c.id)});
+  const ta=$('#msgText');const wa=$('#waBtn'),mb=$('#mailBtn');
+  const subj={en:`Happy Birthday, ${c.name}!`,bm:`Selamat Hari Lahir, ${c.name}!`,zh:`生日快乐，${c.name}！`}[msg.lang];
+  const upd=()=>{if(wa)wa.href=waUrl(c,ta.value);if(mb)mb.href=`mailto:${c.email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(ta.value)}`};upd();
+  ta.addEventListener('input',()=>{c.custom=c.custom||{};if(ta.value!==msg.t[msg.lang])c.custom[msg.lang]=ta.value;else delete c.custom[msg.lang];if(!Object.keys(c.custom).length)c.custom=null;saveState();upd()});
+  on('#resetMsg',()=>{if(c.custom){delete c.custom[msg.lang];if(!Object.keys(c.custom).length)c.custom=null}saveState();openDetail(c.id)});
+  on('#copyMsg',()=>copyText(ta.value,'Wish'));
+  on('#waBtn',()=>copyImage(c,'Card image copied. In WhatsApp, paste it into the chat, then press Send'));
+  on('#copyImg',()=>copyImage(c));
+  on('#saveImg',async()=>{await ensureFonts();saveFile(`birthday-card-${fileSafe(c.name)}.png`,await cardBlob(c))});
+  on('#shareImg',async()=>{try{const f=new File([await cardBlob(c)],`birthday-card-${fileSafe(c.name)}.png`,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],text:ta.value});else toast("Sharing isn't available. Use Copy image")}catch(e){if(e&&e.name!=='AbortError')toast("Sharing didn't work. Use Copy image")}});
+  on('#copyEmail',()=>copyText(c.email,'Email address'));
+  const wc=$('#wishedChk');if(wc)wc.addEventListener('change',()=>{const o=nextOcc(c);c.wished[String(o.y)]=wc.checked;if(!wc.checked)delete c.wished[String(o.y)];saveState();toast(wc.checked?'Marked as wished':'Unmarked')})}
+
+/* ---------- wiring ---------- */
+const fileIn=$('#fileIn'),drop=$('#drop');
+fileIn.addEventListener('change',()=>{if(fileIn.files[0])importFile(fileIn.files[0]).catch(()=>{})});
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)importFile(f).catch(()=>{})});
+$('#templateBtn').addEventListener('click',()=>saveFile('birthday-buddy-template.csv',new Blob(['﻿Customer Name,Title,Preferred Name,Company,Birthday,Phone,Email,Account Manager\r\n'],{type:'text/csv'})));
+$('#pdfBtn').addEventListener('click',exportPDF);
+$('#search').addEventListener('input',renderCustomers);
+$('#custList').addEventListener('change',e=>{const t=e.target.dataset.tick;if(!t)return;e.target.checked?ticked.add(t):ticked.delete(t);$('#tickInfo').textContent=ticked.size?`${ticked.size} ticked for the PDF`:''});
+$('#tickAll').addEventListener('click',()=>{($('#custList').dataset.shown||'').split(',').filter(Boolean).forEach(id=>ticked.add(id));renderCustomers()});
+$('#tickNone').addEventListener('click',()=>{ticked.clear();renderCustomers()});
+$('#addBtn').addEventListener('click',()=>{const c=buildRecord({name:'New customer',source:'manual'},'DMY');state.customers.push(c);state.isExample=false;saveState();openDetail(c.id,true)});
+const setS=(k,v)=>{state.settings[k]=v;saveState()};
+$('#setOrg').addEventListener('input',e=>setS('orgName',e.target.value));
+$('#setMe').addEventListener('input',e=>setS('myName',e.target.value));
+$('#setTheme').addEventListener('change',e=>setS('theme',e.target.value));
+$('#setCardLang').addEventListener('change',e=>{setS('cardLang',e.target.value);drawThumbs()});
+$('#setMsgLang').addEventListener('change',e=>setDefaultLang(e.target.value));
+$('#setStyle').addEventListener('change',e=>setDefaultStyle(e.target.value));
+$('#setAddr').addEventListener('change',e=>setDefaultAddr(e.target.value));
+$('#setOrder').addEventListener('change',e=>{setS('dateOrder',e.target.value);toast('Applies to the next file you import')});
+$('#logoIn').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const cv=document.createElement('canvas');const sc=Math.min(1,400/Math.max(im.width,im.height));cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);setS('logo',cv.toDataURL('image/png'));setLogoImg();renderSettings();toast('Logo added to the card');URL.revokeObjectURL(im.src)};im.src=URL.createObjectURL(f)});
+$('#logoClear').addEventListener('click',()=>{setS('logo','');setLogoImg();renderSettings()});
+$('#icsArea').addEventListener('click',e=>{if(e.target.id==='icsBtn'){const {text,count}=buildICS();if(!count){toast('No customers with birthdays yet');return}saveFile('customer-birthday-reminders.ics',new Blob([text],{type:'text/calendar'}))}});
+$('#backupBtn').addEventListener('click',()=>{const t=today();saveFile(`birthday-buddy-backup-${t.y}${pad2(t.m)}${pad2(t.d)}.json`,new Blob([JSON.stringify({app:'Birthday Buddy',version:1,customers:state.customers,settings:{...state.settings,logo:''}},null,1)],{type:'application/json'}))});
+$('#exampleBtn').addEventListener('click',async()=>{if(state.customers.length&&!state.isExample){const ok=await confirmBox({title:'Replace your list with examples?',body:`Your ${state.customers.length} customers will be replaced by example customers. Download a backup first if you want to keep them.`,okText:'Replace',danger:true});if(!ok)return}loadExamples();toast('Example customers loaded');showTab('week')});
+$('#wipeBtn').addEventListener('click',async()=>{const ok=await confirmBox({title:'Delete all customers?',body:`All ${state.customers.length} customers will be removed from this device. This can't be undone unless you have a backup.`,okText:'Delete all',danger:true});if(!ok)return;state.customers=[];state.isExample=false;ticked.clear();saveState();renderAll();toast('All customers deleted')});
+
+/* ---------- examples (dates are relative to today so the demo always has upcoming birthdays) ---------- */
+function loadExamples(){
+  const t=today();const rel=(n,yr)=>{const d=new Date(Date.UTC(t.y,t.m-1,t.d+n));return`${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth()+1)}/${yr}`};
+  const rows=[
+    ['Tan Mei Ling','Madam','Sinar Logistics Sdn Bhd',rel(0,1980),'012-345 6789','meiling.tan@example.com','Aisyah Rahman','Mei Ling'],
+    ['Muhammad Faiz bin Ismail','Encik','Faiz Engineering Works',rel(1,1985),'0198765432','faiz@example.com','Daniel Lim'],
+    ['Rajesh Kumar a/l Subramaniam','Mr','Kumar Textiles Sdn Bhd',rel(3,1979),'016-222 3344','rajesh.k@example.com','Priya Nair'],
+    ['Nurul Huda binti Hassan','Puan','Huda Bakery',rel(3,1990),'017-334 4556','','Aisyah Rahman'],
+    ['LIM WEI JIE','Mr','',rel(5,1988),'12-6677889','weijie.lim@example.com','Daniel Lim'],
+    ['Siti Aminah binti Yusof','Puan','Kedai Runcit Aminah',rel(6,1972),'','','Priya Nair'],
+    ['Chong Kah Mun','Mr','Chong Hardware Trading',rel(12,1975),'011-2345 6789','kahmun@example.com','','张先生'],
+    ['Lee Pei Shan','Ms','Bayu Travel & Tours',rel(20,1992),'013-778 1200','peishan@example.com','Daniel Lim'],
+    ['Ahmad Zulkifli bin Omar','Encik','Zul Auto Parts',rel(45,1983),'019-455 0091','zul@example.com','Aisyah Rahman'],
+    ['Kavitha Ramasamy','Madam','KR Dental Clinic','31/02/1988','012-909 1122','kavitha@example.com','Priya Nair'],
+    ['David Ong','Mr','Ong Properties','','016-551 2299','david.ong@example.com','Daniel Lim']];
+  state.customers=rows.map(r=>buildRecord({name:r[0],title:r[1],company:r[2],birthday:r[3],phone:r[4],email:r[5],am:r[6],nick:r[7]||'',source:'file'},'DMY'));
+  state.isExample=true;saveState();renderAll()}
+
+/* ---------- start ---------- */
+if(!loadState())loadExamples();
+setLogoImg();renderAll();ensureFonts().then(drawThumbs);
+try{const tab=localStorage.getItem(LS+'.tab');if(tab&&$('#view-'+tab))showTab(tab)}catch(e){}
+window.BB={get state(){return state},importFile,buildReview,commitImport,buildRecord,parseDate,normPhone,buildPDF,buildICS,messagesFor,drawCard,cardBlob,nextOcc,renderAll,setToday(d){todayOverride=d;renderAll()},get review(){return review}};
+</script>
+
+</body></html>
